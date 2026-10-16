@@ -1,0 +1,12 @@
+# Built by publish.py (Netlify builds it from the repo)
+site/
+
+# API response cache for the bank tool (large, rebuilt on demand)
+bank/.cache/
+__pycache__/
+
+# Original upload, kept locally only
+files.zip
+
+# Personal Claude Code settings
+.claude/settings.local.json

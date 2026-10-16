@@ -1,0 +1,5 @@
+# Netlify builds the site from this repo on every push to main.
+# publish.py copies the game and bank/bank.js into site/ (plus _headers and _redirects).
+[build]
+  command = "python3 publish.py"
+  publish = "site"

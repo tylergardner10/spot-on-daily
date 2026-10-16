@@ -1,0 +1,34 @@
+# Every morning, schedule the coming 14 days and commit bank/bank.js.
+# The push makes Netlify rebuild, so the live site never runs out of sets.
+# Uses only sets already verified in questions.json; it never fetches new answers.
+name: Refresh daily schedule
+
+on:
+  schedule:
+    - cron: "0 9 * * *"   # 09:00 UTC = 4-5 am US Eastern
+  workflow_dispatch:       # "Run workflow" button on GitHub
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests
+      - name: Schedule and export
+        run: python bank/spot_on_bank.py export --days 14
+      - name: Commit if anything changed
+        run: |
+          if git diff --quiet; then
+            echo "Schedule already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Refresh daily schedule"
+          git push

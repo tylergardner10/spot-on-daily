@@ -1,0 +1,1882 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spot On Daily</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #C9D0F5;
+    --grid: rgba(22,23,58,.10);
+    --paper: #F4F5FF;
+    --ink: #16173A;
+    --muted: #4F5388;
+    --edge: #16173A;
+    --shadow: #16173A;
+    --input: #FFFFFF;
+    --accent: #FFD23F;
+    --hot: #E8334F;
+    --good: #25A560;
+    --dis: #A9ACD0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0E1030;
+      --grid: rgba(143,151,255,.12);
+      --paper: #1B1E4A;
+      --ink: #F4F5FF;
+      --muted: #A8ADE0;
+      --edge: #8F97FF;
+      --shadow: #05061A;
+      --input: #0E1030;
+      --accent: #FFD23F;
+      --hot: #FF5C77;
+      --good: #3DDC84;
+      --dis: #3A3E78;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0E1030;
+    --grid: rgba(143,151,255,.12);
+    --paper: #1B1E4A;
+    --ink: #F4F5FF;
+    --muted: #A8ADE0;
+    --edge: #8F97FF;
+    --shadow: #05061A;
+    --input: #0E1030;
+    --accent: #FFD23F;
+    --hot: #FF5C77;
+    --good: #3DDC84;
+    --dis: #3A3E78;
+  }
+
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); background: var(--bg); }
+  *, *::before, *::after { box-sizing: inherit; }
+  [hidden] { display: none !important; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 22px/1.15 'VT323', 'Courier New', monospace;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Full-screen playing surface behind everything */
+  #bg { position: fixed; inset: 0; z-index: -1; background: var(--bg); }
+  #bg.menu {
+    background-image:
+      linear-gradient(var(--grid) 2px, transparent 2px),
+      linear-gradient(90deg, var(--grid) 2px, transparent 2px);
+    background-size: 20px 20px;
+  }
+  #bg svg { display: block; width: 100%; height: 100%; }
+  .bgmix { display: grid; grid-template: 1fr 1fr / 1fr 1fr; width: 100%; height: 100%; }
+  .bgmix svg { min-width: 0; min-height: 0; }
+
+  main { max-width: 460px; margin: 0 auto; padding: 18px 16px 40px; }
+
+  .panel {
+    background: var(--paper);
+    color: var(--ink);
+    border: 4px solid var(--edge);
+    box-shadow: 6px 6px 0 var(--shadow);
+    padding: 14px;
+    margin: 0 6px 18px 0;
+  }
+
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; }
+  h1 {
+    margin: 0;
+    font: 400 20px/1 'Press Start 2P', 'Courier New', monospace;
+    text-shadow: 3px 3px 0 var(--accent);
+  }
+  .date { color: var(--muted); font-size: 20px; text-align: right; line-height: 1; }
+
+  /* Stadium scene */
+  #scene {
+    position: fixed; left: 0; top: 0; z-index: -1;
+    image-rendering: pixelated; image-rendering: crisp-edges;
+    background: #14163A;
+  }
+  #bg.play { background: #14163A; }
+  body { background: transparent; }
+  main { position: relative; z-index: 2; }
+
+  /* Game HUD: top bar + jumbotron, fixed over the full-screen field */
+  .hudtop {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 3;
+    padding: calc(env(safe-area-inset-top, 0px) + 12px) 12px 0;
+    pointer-events: none;
+  }
+  .hudtop > * { pointer-events: auto; max-width: 460px; margin-left: auto; margin-right: auto; }
+  .hudtop .bar { margin-right: auto; }
+  .board {
+    position: relative;
+    height: 164px;
+    margin-top: 18px !important;
+    padding: 24px 12px 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
+    text-align: center;
+    color: #fff;
+    background-color: #0A0B22;
+    background-image: radial-gradient(rgba(255,210,63,.10) 1px, transparent 1.6px);
+    background-size: 4px 4px;
+    border: 4px solid #FFD23F;
+    box-shadow: 6px 6px 0 #05061A;
+  }
+  .board::before, .board::after {
+    content: ""; position: absolute; top: -22px; width: 4px; height: 18px; background: #3A3E78;
+  }
+  .board::before { left: 22%; }
+  .board::after { right: 22%; }
+  .board .progress { position: absolute; top: 9px; left: 12px; right: 12px; margin: 0; gap: 4px; }
+  .board .seg { height: 7px; border: 0; box-shadow: none; background: #2A2D5E; font-size: 0; }
+  .board .seg.done { background: #3DDC84; }
+  .board .seg.now { background: #FFD23F; }
+  .board p { margin: 0; }
+  .b-meta { font: 400 9px/1.4 'Press Start 2P', 'Courier New', monospace; color: #FFD23F; }
+  .b-name { font: 400 18px/1.3 'Press Start 2P', 'Courier New', monospace; color: #fff; }
+  .b-stat { font: 22px/1 'VT323', 'Courier New', monospace; color: #9CC8EE; }
+  .b-timer { font: 400 16px/1 'Press Start 2P', 'Courier New', monospace; color: #E8334F; }
+  .b-timer.low { animation: blink 1s steps(2) infinite; }
+  .b-score { font: 400 13px/1 'Press Start 2P', 'Courier New', monospace; color: #A8ADE0; }
+  .b-score span { font-size: 36px; color: #fff; }
+  .b-pts { font: 400 11px/1.3 'Press Start 2P', 'Courier New', monospace; color: #FFD23F; min-height: 1em; }
+  .b-pts.late { color: #FF5C77; }
+  .hudtop .back { padding: 8px 8px; font-size: 9px; }
+
+  .dockwrap {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 3;
+    padding: 0 12px calc(env(safe-area-inset-bottom, 0px) + 12px);
+  }
+  .dock {
+    display: flex; gap: 10px; align-items: stretch;
+    max-width: 460px; margin: 0 auto;
+    padding: 10px;
+    background: #1B1E4A;
+    border: 4px solid var(--edge);
+    box-shadow: 6px 6px 0 var(--shadow);
+  }
+  .dock #num { flex: 1; min-width: 0; font-size: 22px; padding: 12px 8px; }
+  .dock .primary, .dock .secondary { flex: 1; width: auto; margin: 0; min-height: 56px; padding: 12px 8px; font-size: 11px; }
+  .dock .lockb { flex: none; width: 104px; }
+
+  .mid {
+    position: fixed; left: 12px; right: 12px; z-index: 3;
+    max-width: 460px; margin: 0 auto;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+  .mid .panel { margin-bottom: 6px; }
+  .statrow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; }
+  .statrow b { display: block; font: 400 15px/1.3 'Press Start 2P', 'Courier New', monospace; }
+  .statrow span { font-size: 19px; color: var(--muted); }
+  .next { margin: 10px 0 0; text-align: center; font-size: 22px; }
+  .next b { font: 400 12px/1 'Press Start 2P', 'Courier New', monospace; color: var(--hot); }
+  .bar {
+    display: flex; align-items: center; gap: 10px;
+    background: #16173A; color: #fff;
+    border: 4px solid var(--edge);
+    box-shadow: 6px 6px 0 var(--shadow);
+    padding: 10px 12px; margin: 0 6px 0 0;
+  }
+  .bar h1 { font: 400 13px/1 'Press Start 2P', 'Courier New', monospace; color: #fff; text-shadow: 2px 2px 0 #E8334F; }
+  .hudwrap {
+    margin-left: auto; display: flex; align-items: center; gap: 12px;
+    font: 400 10px/1 'Press Start 2P', 'Courier New', monospace; color: #FFD23F;
+  }
+  #hudScore { color: #fff; }
+  .snd {
+    margin-left: auto;
+    padding: 8px 8px;
+    border: 3px solid var(--edge); background: var(--paper); color: var(--ink);
+    font: 400 9px/1 'Press Start 2P', 'Courier New', monospace;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .hudwrap:not([hidden]) + .snd { margin-left: 0; }
+  .snd:active { background: var(--accent); color: #16173A; }
+  .snd:focus-visible { outline: 4px solid var(--accent); outline-offset: 2px; }
+  #view { margin-top: 18px; }
+
+  /* Title screen: logo over a live stadium in attract mode */
+  .title-screen {
+    position: fixed; inset: 0; z-index: 3;
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 16px;
+    padding: calc(env(safe-area-inset-top, 0px) + 34px) 16px calc(env(safe-area-inset-bottom, 0px) + 22px);
+    text-align: center;
+    pointer-events: none;
+  }
+  .title-screen > * { pointer-events: auto; }
+  .ttop { display: flex; flex-direction: column; align-items: center; }
+  .logo {
+    margin: 0;
+    font: 400 56px/1.08 'Press Start 2P', 'Courier New', monospace;
+    color: #FFD23F;
+    text-shadow: 4px 4px 0 #E8334F, 8px 8px 0 #16173A;
+    letter-spacing: 2px;
+  }
+  .logo .daily {
+    display: block;
+    margin-top: 14px;
+    font-size: 24px;
+    letter-spacing: 10px;
+    color: #fff;
+    text-shadow: 3px 3px 0 #E8334F, 6px 6px 0 #16173A;
+  }
+  .ttag {
+    margin: 18px 0 0;
+    background: #16173A; color: #fff;
+    border: 4px solid #8F97FF; box-shadow: 5px 5px 0 #05061A;
+    padding: 8px 12px;
+    font: 24px/1 'VT323', 'Courier New', monospace;
+  }
+  .howpanel { max-width: 360px; margin: 0; text-align: left; font-size: 22px; line-height: 1.1; }
+  .howpanel p { margin: 0 0 8px; }
+  .howpanel p:last-child { margin: 0; }
+  .tbottom { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; max-width: 360px; }
+  .start {
+    width: 100%; min-height: 66px;
+    background: #FFD23F; color: #16173A;
+    border: 4px solid #16173A; box-shadow: 6px 6px 0 #05061A;
+    font: 400 16px/1 'Press Start 2P', 'Courier New', monospace;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .start span { animation: blink 1.2s steps(2) infinite; }
+  .start:active { transform: translate(6px, 6px); box-shadow: none; }
+  .start:focus-visible { outline: 4px solid #fff; outline-offset: 3px; }
+  .trow { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .tinfo {
+    background: #16173A; color: #A8ADE0;
+    border: 3px solid #8F97FF;
+    padding: 6px 10px;
+    font: 22px/1 'VT323', 'Courier New', monospace;
+  }
+  .howbtn {
+    padding: 8px 8px;
+    border: 3px solid var(--edge); background: var(--paper); color: var(--ink);
+    font: 400 9px/1 'Press Start 2P', 'Courier New', monospace;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .howbtn:active { background: var(--accent); color: #16173A; }
+  .howbtn:focus-visible { outline: 4px solid var(--accent); outline-offset: 2px; }
+  .sprite { display: block; image-rendering: pixelated; }
+
+  #shout {
+    position: fixed; left: 0; right: 0; z-index: 2;
+    text-align: center; pointer-events: none; opacity: 0;
+    font: 400 22px/1.2 'Press Start 2P', 'Courier New', monospace;
+    text-shadow: 4px 4px 0 #16173A;
+    padding: 0 8px;
+  }
+  #shout.on { opacity: 1; animation: shoutpop 2.4s steps(12) forwards; }
+  #shout.cheer { color: #FFD23F; }
+  #shout.clap { color: #FFFFFF; }
+  #shout.meh { color: #C9CCD6; }
+  #shout.boo { color: #FF5C77; animation-name: shoutshake; animation-duration: .5s; animation-timing-function: steps(4); animation-iteration-count: 5; animation-fill-mode: none; }
+  @keyframes shoutpop {
+    0% { transform: scale(.6); }
+    10% { transform: scale(1.18); }
+    20% { transform: scale(1); }
+    60% { transform: translateY(-6px); }
+    100% { transform: translateY(0); }
+  }
+  @keyframes shoutshake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-7px); }
+    50% { transform: translateX(7px); }
+    75% { transform: translateX(-7px); }
+    100% { transform: translateX(0); }
+  }
+
+  /* Playing surfaces (used on the track, menu tiles and the reveal field) */
+  .surf { position: relative; overflow: hidden; }
+  .surf[data-surf="nfl"] {
+    background:
+      repeating-linear-gradient(90deg, #fff 0 2px, transparent 2px 10%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.85) 0 2px, transparent 2px 2%) top / 100% 6px no-repeat,
+      repeating-linear-gradient(90deg, rgba(255,255,255,.85) 0 2px, transparent 2px 2%) bottom / 100% 6px no-repeat,
+      repeating-linear-gradient(90deg, #2f9a43 0 10%, #2a8a3c 10% 20%);
+  }
+  .surf[data-surf="nba"] {
+    background:
+      linear-gradient(90deg, transparent calc(50% - 2px), #fff calc(50% - 2px) calc(50% + 2px), transparent calc(50% + 2px)),
+      repeating-linear-gradient(0deg, #D9953F 0 8px, #C88331 8px 16px);
+  }
+  .surf[data-surf="nba"]::before, .surf[data-surf="nba"]::after {
+    content: ""; position: absolute; top: 18%; height: 64%; width: 22%;
+    background: #B8402F; border: 3px solid #fff;
+  }
+  .surf[data-surf="nba"]::before { left: 0; border-left: 0; }
+  .surf[data-surf="nba"]::after { right: 0; border-right: 0; }
+  .surf[data-surf="nhl"] {
+    background:
+      linear-gradient(90deg, transparent calc(50% - 2px), #D33 calc(50% - 2px) calc(50% + 2px), transparent calc(50% + 2px)),
+      linear-gradient(90deg, transparent calc(25% - 3px), #2B5FC7 calc(25% - 3px) calc(25% + 3px), transparent calc(25% + 3px)),
+      linear-gradient(90deg, transparent calc(75% - 3px), #2B5FC7 calc(75% - 3px) calc(75% + 3px), transparent calc(75% + 3px)),
+      linear-gradient(90deg, transparent calc(6% - 1px), #D33 calc(6% - 1px) calc(6% + 1px), transparent calc(6% + 1px), transparent calc(94% - 1px), #D33 calc(94% - 1px) calc(94% + 1px), transparent calc(94% + 1px)),
+      #DCECF5;
+  }
+  .surf[data-surf="nhl"]::before {
+    content: ""; position: absolute; left: 50%; top: 50%;
+    width: 40px; height: 40px; margin: -20px 0 0 -20px;
+    border: 3px solid #2B5FC7; border-radius: 50%;
+  }
+  .surf[data-surf="mlb"] {
+    background:
+      linear-gradient(0deg, transparent 36%, #C98A52 36% 64%, transparent 64%),
+      repeating-linear-gradient(90deg, #2F9A43 0 16px, #2A8A3C 16px 32px);
+  }
+
+  .howto { font-size: 24px; line-height: 1.1; }
+
+  .qmeta { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .weight { margin: 0; color: var(--muted); font-size: 22px; text-align: right; line-height: 1; }
+  .back {
+    padding: 8px 10px;
+    border: 3px solid var(--edge); background: var(--paper); color: var(--ink);
+    font: 400 10px/1 'Press Start 2P', 'Courier New', monospace;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .back:active { background: var(--accent); color: #16173A; }
+  .back:focus-visible { outline: 4px solid var(--accent); outline-offset: 2px; }
+
+  .player { margin: 0 0 8px; font: 400 16px/1.5 'Press Start 2P', 'Courier New', monospace; }
+  .stat { margin: 0; font-size: 24px; line-height: 1.05; }
+
+  .timer { display: flex; align-items: center; gap: 10px; margin: 16px 0 0; }
+  .tbar { flex: 1; height: 20px; border: 4px solid var(--edge); background: var(--input); padding: 2px; }
+  .tfill {
+    height: 100%; width: 100%;
+    background: repeating-linear-gradient(90deg, var(--good) 0 8px, transparent 8px 10px);
+    transition: width .25s linear;
+  }
+  .tsec { min-width: 2ch; text-align: right; font: 400 12px/1 'Press Start 2P', 'Courier New', monospace; }
+  .timer.low .tfill { background: repeating-linear-gradient(90deg, var(--hot) 0 8px, transparent 8px 10px); }
+  .timer.low .tsec { color: var(--hot); }
+
+  .readout { margin: 16px 0 0; }
+  #num {
+    display: block; width: 100%;
+    padding: 14px 10px;
+    text-align: center;
+    background: var(--input); color: var(--ink);
+    border: 4px solid var(--edge); border-radius: 0;
+    font: 400 28px/1.1 'Press Start 2P', 'Courier New', monospace;
+    -webkit-appearance: none; appearance: none;
+  }
+  #num::placeholder { color: var(--dis); opacity: 1; }
+  #num:focus { outline: 4px solid var(--accent); outline-offset: 0; }
+
+  /* Reveal field */
+  .field-wrap { position: relative; height: 80px; margin: 52px 6px 54px 0; }
+  .field-wrap:not(.revealed) { display: none; }
+  .field {
+    position: absolute; inset: 0;
+    border: 4px solid var(--edge);
+    box-shadow: 6px 6px 0 var(--shadow);
+  }
+  .end {
+    position: absolute; top: 50%; transform: translateY(-50%); z-index: 1;
+    font: 400 9px/1 'Press Start 2P', 'Courier New', monospace;
+    color: #fff; text-shadow: 2px 2px 0 #16173A;
+  }
+  .surf[data-surf="nhl"] .end { color: #16173A; text-shadow: none; }
+  .end.lo { left: 8px; }
+  .end.hi { right: 8px; }
+  .gap {
+    --lo: 0; --w: 0;
+    position: absolute; top: 4px; bottom: 4px;
+    left: calc(100% * var(--lo));
+    width: calc(100% * var(--w));
+    background: rgba(255,210,63,.55);
+    opacity: 0; pointer-events: none;
+    z-index: 1;
+  }
+  .pin {
+    --p: 0;
+    position: absolute; top: 4px; bottom: 4px; z-index: 2;
+    width: 8px; margin-left: -4px;
+    left: calc(100% * var(--p));
+    border: 2px solid #16173A;
+    opacity: 0; pointer-events: none;
+  }
+  .pin.guess { background: #fff; }
+  .pin.actual { background: #FFD23F; }
+  .tag {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    white-space: nowrap;
+    padding: 5px 7px;
+    border: 3px solid #16173A;
+    font: 400 9px/1 'Press Start 2P', 'Courier New', monospace;
+    color: #16173A;
+  }
+  .guess .tag { top: -36px; background: #fff; }
+  .actual .tag { bottom: -36px; background: #FFD23F; }
+  .pin[data-align="start"] .tag { left: -2px; transform: none; }
+  .pin[data-align="end"] .tag { left: auto; right: -2px; transform: none; }
+  .revealed .gap, .revealed .pin { opacity: 1; }
+  .animate .pin.actual { transition: left .9s steps(12); }
+  .animate .gap { transition: left .9s steps(12), width .9s steps(12); }
+
+  /* Buttons */
+  .primary, .secondary {
+    display: block; width: calc(100% - 6px);
+    min-height: 56px; padding: 16px 12px;
+    border: 4px solid var(--edge); border-radius: 0;
+    box-shadow: 4px 4px 0 var(--shadow);
+    font: 400 13px/1.2 'Press Start 2P', 'Courier New', monospace;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    margin-bottom: 14px;
+  }
+  .primary { background: var(--accent); color: #16173A; }
+  .secondary { background: var(--paper); color: var(--ink); }
+  .primary:active, .secondary:active { transform: translate(4px, 4px); box-shadow: none; }
+  .sport:disabled { opacity: 0.5; cursor: default; filter: grayscale(1); }
+  .primary:disabled { background: var(--dis); color: var(--muted); cursor: default; box-shadow: none; transform: translate(4px, 4px); }
+  .primary:focus-visible, .secondary:focus-visible { outline: 4px solid var(--ink); outline-offset: 3px; }
+
+  /* Suggest a stat */
+  .modal {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; padding: 16px; overflow-y: auto;
+    background: rgba(5,6,26,.65);
+  }
+  .suggest { width: 100%; max-width: 420px; margin: auto; }
+  .suggest h2 { margin: 0 0 8px; font: 400 14px/1.3 'Press Start 2P', 'Courier New', monospace; }
+  .suggest .hint { margin: 0 0 12px; color: var(--muted); }
+  .suggest label { display: block; margin: 0 0 10px; }
+  .suggest input, .suggest select, .suggest textarea {
+    display: block; width: 100%; margin-top: 4px; padding: 8px;
+    background: var(--input); color: var(--ink);
+    border: 4px solid var(--edge); border-radius: 0;
+    font: inherit;
+  }
+  .suggest select:disabled { color: var(--muted); }
+  .suggest input:focus, .suggest select:focus, .suggest textarea:focus { outline: 4px solid var(--accent); outline-offset: 0; }
+  .suggest .hp { position: absolute; left: -9999px; }
+  .sgstatus { min-height: 1.15em; margin: 0 0 10px; }
+  .sgstatus.ok { color: var(--good); }
+  .sgstatus.err { color: var(--hot); }
+  .sgbtns { display: flex; gap: 10px; }
+  .sgbtns button { flex: 1; width: auto; margin: 0 4px 4px 0; }
+  .fine { margin: 14px 0 0; font-size: 18px; color: var(--muted); text-align: center; }
+  .tinfo.tfine { padding: 4px 8px; font-size: 17px; text-align: center; }
+
+  /* Result */
+  .score { display: flex; align-items: baseline; gap: 8px; font-family: 'Press Start 2P', 'Courier New', monospace; }
+  .score .big { font-size: 44px; line-height: 1; }
+  .score .of { font-size: 14px; color: var(--muted); }
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; margin: 16px 0 0; }
+  .facts div { min-width: 0; }
+  .facts dt { color: var(--muted); font-size: 20px; line-height: 1; }
+  .facts dd { margin: 2px 0 0; font-size: 28px; line-height: 1; }
+  .late { margin: 14px 0 0; font-size: 22px; color: var(--hot); }
+
+  /* Progress by weight */
+  .progress { display: flex; gap: 6px; margin: 0 6px 18px 0; }
+  .progress:empty { display: none; }
+  .seg {
+    height: 28px;
+    border: 3px solid var(--edge); background: var(--paper); color: var(--muted);
+    box-shadow: 3px 3px 0 var(--shadow);
+    display: flex; align-items: center; justify-content: center;
+    font: 400 8px/1 'Press Start 2P', 'Courier New', monospace;
+  }
+  .seg.done { background: var(--good); color: #16173A; }
+  .seg.now { background: var(--accent); color: #16173A; }
+
+  /* Menu */
+  .menu { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; margin: 0 6px 0 0; }
+  .sport {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 12px; margin: 0;
+    text-align: left; font-family: 'VT323', monospace;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sport:active { transform: translate(6px, 6px); box-shadow: none; }
+  .sport:focus-visible { outline: 4px solid var(--accent); outline-offset: 3px; }
+  .sport.wide { grid-column: 1 / -1; }
+  .swatch { position: relative; display: flex; height: 64px; border: 4px solid var(--edge); }
+  .swatch .surf { flex: 1; min-width: 0; }
+  .swatch .sprite { position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); }
+  .sname { font: 400 16px/1.2 'Press Start 2P', 'Courier New', monospace; }
+  .sdesc { font-size: 22px; line-height: 1; color: var(--muted); }
+
+  /* Final */
+  .callout {
+    margin: 0 0 12px;
+    font: 400 16px/1.4 'Press Start 2P', 'Courier New', monospace;
+    color: var(--ink);
+    text-shadow: 3px 3px 0 var(--accent);
+    animation: blink 1s steps(2) infinite;
+  }
+  @keyframes blink { 50% { opacity: .35; } }
+  .tier { margin: 12px 0 0; font-size: 26px; line-height: 1; }
+  .breakdown { list-style: none; margin: 0; padding: 0; }
+  .breakdown li {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 3px dashed var(--muted);
+  }
+  .breakdown li:last-child { border-bottom: 0; }
+  .breakdown strong { display: block; font: 400 11px/1.4 'Press Start 2P', 'Courier New', monospace; }
+  .breakdown span { color: var(--muted); font-size: 20px; line-height: 1; }
+  .breakdown .bq { display: block; margin: 2px 0; color: var(--ink); }
+  .breakdown .pts { text-align: right; flex: none; }
+  .breakdown .pts b { display: block; font: 400 16px/1.2 'Press Start 2P', 'Courier New', monospace; }
+  .status { min-height: 24px; margin: 4px 0 0; font-size: 22px; text-align: center; }
+  .status.panel { padding: 8px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body data-sport="menu">
+<div id="bg" class="menu" aria-hidden="true"></div>
+<canvas id="scene" aria-hidden="true" hidden></canvas>
+<div id="shout" aria-hidden="true"></div>
+<div class="title-screen" id="titleScreen" hidden>
+  <div class="ttop">
+    <h1 class="logo">SPOT<br>ON<span class="daily">DAILY</span></h1>
+    <p class="ttag">Guess the stat.</p>
+  </div>
+  <div class="panel howpanel" id="howPanel" hidden>
+    <p>Pick a sport and guess five real stats, 60 seconds each.</p>
+    <p>Closer guesses score more and push your player up the field. Later questions count more.</p>
+    <p>Nail it and the crowd goes wild. Miss badly and they boo.</p>
+  </div>
+  <div class="tbottom">
+    <button class="start" id="start" type="button"><span>PRESS START</span></button>
+    <div class="trow"><span class="tinfo" id="titleDate"></span></div>
+    <div class="trow">
+      <button class="snd" type="button" aria-pressed="false">Sfx off</button>
+      <button class="howbtn" id="howBtn" type="button" aria-expanded="false" aria-controls="howPanel">How to play</button>
+    </div>
+    <div class="trow"><span class="tinfo tfine">Fan-made game. Not affiliated with the NFL, NBA, NHL or MLB.</span></div>
+  </div>
+</div>
+<main id="menuMain">
+  <header class="bar">
+    <h1>Spot On Daily</h1>
+    <button class="snd" type="button" aria-pressed="false">Sfx off</button>
+  </header>
+  <section id="view" aria-live="polite"></section>
+  <span id="dateLabel" hidden></span>
+</main>
+<div class="hudtop" id="hudtop" hidden>
+  <header class="bar">
+    <button class="back" id="back" type="button" aria-label="Back to sports">&lsaquo; Back</button>
+    <div class="hudwrap"><span id="hudScore">0000</span><span id="hudQ"></span></div>
+    <button class="snd" type="button" aria-pressed="false">Sfx off</button>
+  </header>
+  <section class="board" id="board" aria-live="polite">
+    <div class="progress" id="progress" role="img" aria-label="Progress"></div>
+    <div id="boardBody" style="display:contents"></div>
+  </section>
+</div>
+<div class="mid" id="mid" hidden></div>
+<div class="dockwrap" id="dockwrap" hidden><div class="dock" id="dock"></div></div>
+
+<!-- Suggest a stat. Netlify finds this form when the site deploys and collects what people send. -->
+<div class="modal" id="suggestModal" hidden>
+  <form class="panel suggest" id="suggestForm" name="suggest-stat" method="POST" data-netlify="true"
+        netlify-honeypot="bot-field" role="dialog" aria-modal="true" aria-labelledby="sgTitle">
+    <input type="hidden" name="form-name" value="suggest-stat">
+    <p class="hp"><label>Leave this empty <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+    <h2 id="sgTitle">Suggest a stat</h2>
+    <p class="hint">One stat per suggestion. If it checks out, it could turn up in a future set.</p>
+    <label>League
+      <select name="league" id="sgLeague" required>
+        <option value="">Pick one</option><option>NFL</option><option>NBA</option><option>NHL</option><option>MLB</option>
+      </select>
+    </label>
+    <label>Player <input name="player" id="sgPlayer" required maxlength="60" autocomplete="off"></label>
+    <label>Season <input name="season" id="sgSeason" required maxlength="7" inputmode="numeric" placeholder="2022" autocomplete="off"></label>
+    <label>Stat
+      <select name="stat" id="sgStat" required disabled><option value="">Pick a league first</option></select>
+    </label>
+    <label>Why it's fun (optional) <textarea name="note" maxlength="200" rows="2"></textarea></label>
+    <label>Your name (optional) <input name="name" maxlength="40" autocomplete="nickname"></label>
+    <p class="sgstatus" id="sgStatus" role="status"></p>
+    <div class="sgbtns">
+      <button class="primary" id="sgSend" type="submit">Send</button>
+      <button class="secondary" id="sgClose" type="button">Close</button>
+    </div>
+  </form>
+</div>
+
+<!-- Daily sets, written by: python bank/spot_on_bank.py export -->
+<script src="../bank/bank.js"></script>
+<script>
+(function () {
+var SPR = {
+  nfl: {
+    pal: { k: '#12122B', h: '#2D6BE4', s: '#F2B27A', g: '#C9CCD6', j: '#E0412F', n: '#8A4B1F', p: '#F4F1E6' },
+    rows: [
+      '...kkkkk....',
+      '..khhhhhk...',
+      '.khhhhhhhk..',
+      '.khhhhssgk..',
+      '.khhhhsggk..',
+      '..kkkkkkk...',
+      '.kjjjjjjjk..',
+      'kjjjjjjjjjnk',
+      'kjjjjjjjjnnk',
+      '.kjjjjjjjnk.',
+      '..kpppppk...',
+      '..kppkppk...',
+      '.kppk.kppk..',
+      '.kkk...kkk..'
+    ]
+  },
+  nba: {
+    pal: { k: '#12122B', d: '#3A2418', s: '#F2B27A', j: '#7A3FD1', p: '#5B2FA6', w: '#FFFFFF', o: '#E8742A' },
+    rows: [
+      '...kkkkk....',
+      '..kdddddk...',
+      '..kddsssk...',
+      '..kdssksk...',
+      '...kssssk...',
+      '..kkjjjkk...',
+      '.kjjjjjjjk..',
+      'kjjjjjjjjkk.',
+      'ksjjjjjjkook',
+      '..kjjjjjkook',
+      '..kppppk.kk.',
+      '..kppkppk...',
+      '.kppk.kppk..',
+      '.kwwk.kwwk..'
+    ]
+  },
+  nhl: {
+    pal: { k: '#12122B', h: '#1D3F9E', s: '#F2B27A', j: '#D83A3A', p: '#1D3F9E', w: '#D9E6EE', n: '#8A4B1F' },
+    rows: [
+      '...kkkkk....',
+      '..khhhhhk...',
+      '.khhhhhhhk..',
+      '.khhhhssk...',
+      '..kkkkkkk...',
+      '.kjjjjjjjk..',
+      'kjjjjjjjjjk.',
+      'kjjjjjjjjjkn',
+      '.kjjjjjjjk.n',
+      '..kppppppk.n',
+      '..kppkppk..n',
+      '.kppk.kppk.n',
+      '.kwwk.kwwknn',
+      'kkkkkkkkkkkk'
+    ]
+  },
+  mlb: {
+    pal: { k: '#12122B', h: '#D83A3A', s: '#F2B27A', j: '#F4F1E6', p: '#D6D3C4', w: '#FFFFFF', n: '#C58A4A' },
+    rows: [
+      '...kkkkk.nn.',
+      '..khhhhhknn.',
+      '.khhhhhhhkn.',
+      '.kkssssskn..',
+      '..ksskssk.n.',
+      '..kkkkkkk.n.',
+      '.kjjjjjjjknn',
+      'kjjjjjjjjjkn',
+      '.kjjjjjjjk.n',
+      '..kppppppk..',
+      '..kppkppk...',
+      '.kppk.kppk..',
+      '.kppk.kppk..',
+      '.kwwk.kwwk..'
+    ]
+  }
+};
+
+var Scene = (function () {
+  var S = {};
+  S.mk = function (w, h) { var c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+
+  var cv = null, ctx = null;
+  var W = 0, H = 0, cx = 0, fy0 = 0, fy1 = 0, hwNear = 0, hwFar = 0;
+  var sport = 'nfl', runKey = 'nfl';
+  var staticCv = null, seats = [], sprites = {};
+  var run = { t: 0, target: 0, dir: 1, moving: false };
+  var rx = { mood: 0, t0: -99, spawned: 0 };
+  var parts = [], clock = 0, lastNow = 0, lastDraw = -1, raf = 0, active = false;
+  var A = 1.2, C = A / (1 + A);
+  var FPS = 12;
+
+  function rng(seed) {
+    return function () {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  // ---------- Perspective: v runs 0 (near camera) to 1 (far), u runs -1 to 1 across ----------
+  function pOfV(v) { return (1 - 1 / (1 + A * v)) / C; }
+  function vOfP(p) { var pc = p * C; return (pc / (1 - pc)) / A; }
+  function yOfV(v) { return fy1 - (fy1 - fy0) * pOfV(v); }
+  function hwOfV(v) { return hwNear + (hwFar - hwNear) * pOfV(v); }
+  function PX(u, v) { return [cx + u * hwOfV(v), yOfV(v)]; }
+
+  var VEN = {
+    nfl: { far: 0.60, pal: ['#2D6BE4', '#2D6BE4', '#2D6BE4', '#E0412F', '#E0412F', '#F4F1E6', '#F4F1E6', '#FFD23F', '#3DDC84', '#16173A'] },
+    nba: { far: 0.72, pal: ['#7A3FD1', '#7A3FD1', '#7A3FD1', '#F2B632', '#F2B632', '#F4F1E6', '#F4F1E6', '#E0412F', '#16173A', '#16173A'] },
+    nhl: { far: 0.72, pal: ['#D83A3A', '#D83A3A', '#D83A3A', '#1D3F9E', '#1D3F9E', '#F4F1E6', '#F4F1E6', '#F4F1E6', '#16173A', '#16173A'] },
+    mlb: { far: 0.92, pal: ['#D83A3A', '#D83A3A', '#D83A3A', '#1B2F6B', '#1B2F6B', '#F4F1E6', '#F4F1E6', '#FFD23F', '#FFD23F', '#16173A'] }
+  };
+  var SKINS = ['#F2B27A', '#D99B63', '#A8683A', '#7A4A2A', '#F6C9A0'];
+  var CONFETTI = ['#FFD23F', '#E8334F', '#3DDC84', '#FFFFFF', '#2D6BE4', '#FF8A3D'];
+  var TRASH = ['#8A4B1F', '#C9CCD6', '#E8334F', '#F4F1E6'];
+
+  function darken(hex, k) {
+    var n = parseInt(hex.slice(1), 16);
+    var r = Math.round(((n >> 16) & 255) * k), g = Math.round(((n >> 8) & 255) * k), b = Math.round((n & 255) * k);
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
+  }
+
+  // ---------- Venue shapes ----------
+  function nhlLim(v) {
+    var vd = Math.min(v, 1 - v), rcv = 0.14, rcu = 0.66;
+    if (vd >= rcv) return 1;
+    var t = (rcv - vd) / rcv;
+    return 1 - rcu * (1 - Math.sqrt(Math.max(0, 1 - t * t)));
+  }
+  function fenceV(u) { return 0.58 + 0.42 * Math.sqrt(Math.max(0, 1 - u * u)); }
+  function inField(u, v) {
+    if (Math.abs(u) > 1) return false;
+    if (sport === 'nhl') return Math.abs(u) <= nhlLim(v);
+    if (sport === 'mlb') return v <= fenceV(u);
+    return true;
+  }
+  function uvAt(x, y) {
+    var p = (fy1 - (y + 0.5)) / (fy1 - fy0);
+    if (p < 0 || p > 1) return null;
+    var v = vOfP(p), hw = hwNear + (hwFar - hwNear) * p;
+    return { u: (x + 0.5 - cx) / hw, v: v, hw: hw };
+  }
+  function isField(x, y) {
+    var o = uvAt(x, y);
+    return !!o && inField(o.u, o.v);
+  }
+  function nearField(x, y, m) {
+    return isField(x - m, y) || isField(x, y) || isField(x + m, y) ||
+           isField(x - m, y + 2) || isField(x, y + 2) || isField(x + m, y + 2);
+  }
+
+  // ---------- Surface colors ----------
+  var CA = {
+    nfl: function (u, v) {
+      if (Math.abs(u) > 0.975) return '#FFFFFF';
+      if (v < 0.1) return (Math.floor(v * 90) % 2) ? '#2B4FB3' : '#2A49A6';
+      if (v > 0.9) return (Math.floor(v * 90) % 2) ? '#C93A3A' : '#B83232';
+      return (Math.floor((v - 0.1) / 0.08) % 2) ? '#2A8A3C' : '#2F9A43';
+    },
+    nba: function (u, v) {
+      var oob = Math.abs(u) > 0.9 || v < 0.04 || v > 0.96;
+      var plank = Math.floor((u + 1) / 0.08) % 2;
+      if (oob) return plank ? '#B07328' : '#A66B24';
+      if (Math.abs(u) < 0.288 && (v < 0.226 || v > 0.774)) return plank ? '#B8402F' : '#AD3A2A';
+      return plank ? '#D9953F' : '#CF8B36';
+    },
+    nhl: function (u, v, hw) {
+      if (Math.abs(u) > nhlLim(v) - 1.6 / hw) return '#EEF3F7';
+      return (Math.floor(v * 40) % 2) ? '#D3E6F2' : '#DCECF5';
+    },
+    mlb: function (u, v) {
+      var stripe = (Math.floor(v * 22) % 2) ? '#2A8A3C' : '#2F9A43';
+      if (v > fenceV(u) - 0.04 || Math.abs(u) > 0.965) return '#C98A52';
+      var e = (u / 0.41) * (u / 0.41) + ((v - 0.2) / 0.24) * ((v - 0.2) / 0.24);
+      if (e <= 1) {
+        if (Math.abs(u) / 0.2 + Math.abs(v - 0.209) / 0.134 <= 1) {
+          var m = (u / 0.05) * (u / 0.05) + ((v - 0.2) / 0.02) * ((v - 0.2) / 0.02);
+          return m <= 1 ? '#C98A52' : stripe;
+        }
+        return '#C98A52';
+      }
+      var h = (u / 0.12) * (u / 0.12) + ((v - 0.05) / 0.04) * ((v - 0.05) / 0.04);
+      return h <= 1 ? '#C98A52' : stripe;
+    }
+  };
+
+  // ---------- Drawing helpers ----------
+  function plot(g, x0, y0, x1, y1, color, th) {
+    x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
+    var dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1, dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1, err = dx + dy, guard = 0;
+    g.fillStyle = color;
+    for (;;) {
+      g.fillRect(x0, y0, th, th);
+      if ((x0 === x1 && y0 === y1) || ++guard > 2000) break;
+      var e2 = 2 * err;
+      if (e2 >= dy) { err += dy; x0 += sx; }
+      if (e2 <= dx) { err += dx; y0 += sy; }
+    }
+  }
+  function wpoly(g, pts, color, th) {
+    for (var i = 0; i < pts.length - 1; i++) {
+      var a = pts[i], b = pts[i + 1], n = 24, px = null;
+      for (var k = 0; k <= n; k++) {
+        var t = k / n, p = PX(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t);
+        if (px) plot(g, px[0], px[1], p[0], p[1], color, th);
+        px = p;
+      }
+    }
+  }
+  function wcurve(g, fn, t0, t1, n, color, th) {
+    var pts = [];
+    for (var i = 0; i <= n; i++) pts.push(fn(t0 + (t1 - t0) * i / n));
+    wpoly(g, pts, color, th);
+  }
+  function wellipse(g, u0, v0, ru, rv, a0, a1, color, th) {
+    wcurve(g, function (a) { return [u0 + ru * Math.cos(a), v0 + rv * Math.sin(a)]; }, a0, a1, 40, color, th);
+  }
+  function dot(g, u, v, color, w, h) {
+    var p = PX(u, v);
+    g.fillStyle = color;
+    g.fillRect(Math.round(p[0] - w / 2), Math.round(p[1] - h / 2), w, h);
+  }
+
+  // ---------- Static venue layer ----------
+  var AD = ['#FFD23F', '#E8334F', '#2D6BE4', '#FFFFFF'];
+
+  function buildStatic() {
+    staticCv = S.mk(W, H);
+    var g = staticCv.getContext('2d');
+    g.fillStyle = '#14163A'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#1A1D49'; g.fillRect(0, 0, W, Math.round(fy1));
+    g.fillStyle = '#10122E';
+    for (var ty = 6; ty < H; ty += 12) g.fillRect(0, ty, W, 1);
+
+    var top = Math.floor(fy0), bot = Math.ceil(fy1), ext = [];
+    for (var y = top; y < bot; y++) {
+      var p = (fy1 - (y + 0.5)) / (fy1 - fy0);
+      if (p < 0 || p > 1) continue;
+      var v = vOfP(p), hw = hwNear + (hwFar - hwNear) * p;
+      var x0 = Math.floor(cx - hw), x1 = Math.ceil(cx + hw);
+      var runC = null, runX = x0, minX = 1e9, maxX = -1e9;
+      for (var x = x0; x <= x1; x++) {
+        var u = (x + 0.5 - cx) / hw, c = null;
+        if (Math.abs(u) <= 1 && inField(u, v)) { c = CA[sport](u, v, hw); if (x < minX) minX = x; if (x > maxX) maxX = x; }
+        if (c !== runC) {
+          if (runC) { g.fillStyle = runC; g.fillRect(runX, y, x - runX, 1); }
+          runC = c; runX = x;
+        }
+      }
+      if (runC) { g.fillStyle = runC; g.fillRect(runX, y, x1 + 1 - runX, 1); }
+      ext.push({ y: y, l: minX, r: maxX });
+    }
+
+    marks(g);
+    rails(g, ext);
+    decor(g);
+  }
+
+  function marks(g) {
+    var k, v, a;
+    if (sport === 'nfl') {
+      for (k = 0; k <= 10; k++) wpoly(g, [[-1, 0.1 + 0.08 * k], [1, 0.1 + 0.08 * k]], '#FFFFFF', 1);
+      var gp = PX(0, 1), by = Math.round(gp[1]);
+      g.fillStyle = '#FFD23F';
+      g.fillRect(cx, by - 5, 1, 5);
+      g.fillRect(cx - 6, by - 5, 13, 1);
+      g.fillRect(cx - 6, by - 11, 1, 6);
+      g.fillRect(cx + 6, by - 11, 1, 6);
+    } else if (sport === 'nba') {
+      var W2 = '#FFFFFF';
+      wpoly(g, [[-0.9, 0.04], [0.9, 0.04], [0.9, 0.96], [-0.9, 0.96], [-0.9, 0.04]], W2, 1);
+      wpoly(g, [[-0.9, 0.5], [0.9, 0.5]], W2, 1);
+      wellipse(g, 0, 0.5, 0.216, 0.059, 0, Math.PI * 2, W2, 1);
+      [0, 1].forEach(function (far) {
+        function V(v) { return far ? 1 - v : v; }
+        wpoly(g, [[-0.288, V(0.04)], [-0.288, V(0.226)], [0.288, V(0.226)], [0.288, V(0.04)]], W2, 1);
+        wcurve(g, function (a) { return [0.216 * Math.cos(a), V(0.226 + 0.059 * Math.sin(a))]; }, 0, Math.PI, 24, W2, 1);
+        wcurve(g, function (a) { return [0.855 * Math.cos(a), V(0.0914 + 0.2325 * Math.sin(a))]; }, 0.387, Math.PI - 0.387, 40, W2, 1);
+        wpoly(g, [[-0.792, V(0.04)], [-0.792, V(0.178)]], W2, 1);
+        wpoly(g, [[0.792, V(0.04)], [0.792, V(0.178)]], W2, 1);
+        var bb = PX(0, V(0.079)), rim = PX(0, V(0.0914));
+        g.fillStyle = '#FFFFFF'; g.fillRect(Math.round(bb[0] - 5), Math.round(bb[1] - (far ? 5 : 1)), 11, far ? 5 : 1);
+        g.fillStyle = '#E8742A'; g.fillRect(Math.round(rim[0] - 2), Math.round(rim[1] - (far ? 1 : 0)), 5, 2);
+        g.fillStyle = '#E8E8F0'; g.fillRect(Math.round(bb[0]), Math.round(bb[1] - (far ? 10 : 0)), 1, far ? 5 : 0);
+      });
+    } else if (sport === 'nhl') {
+      var RED = '#D33333', BLUE = '#2B5FC7';
+      wpoly(g, [[-1, 0.5], [1, 0.5]], RED, 2);
+      wpoly(g, [[-1, 0.375], [1, 0.375]], BLUE, 2);
+      wpoly(g, [[-1, 0.625], [1, 0.625]], BLUE, 2);
+      wpoly(g, [[-0.9, 0.07], [0.9, 0.07]], RED, 1);
+      wpoly(g, [[-0.9, 0.93], [0.9, 0.93]], RED, 1);
+      wellipse(g, 0, 0.5, 0.33, 0.075, 0, Math.PI * 2, BLUE, 1);
+      dot(g, 0, 0.5, BLUE, 2, 1);
+      [[-0.52, 0.24], [0.52, 0.24], [-0.52, 0.76], [0.52, 0.76]].forEach(function (c) {
+        wellipse(g, c[0], c[1], 0.33, 0.075, 0, Math.PI * 2, RED, 1);
+        dot(g, c[0], c[1], RED, 2, 1);
+      });
+      [[-0.52, 0.42], [0.52, 0.42], [-0.52, 0.58], [0.52, 0.58]].forEach(function (c) { dot(g, c[0], c[1], RED, 2, 1); });
+      [0.07, 0.93].forEach(function (gv) {
+        var far = gv > 0.5, np = PX(0, gv);
+        wcurve(g, function (a) { return [0.14 * Math.cos(a), gv + (far ? -1 : 1) * 0.025 * Math.sin(a)]; }, 0, Math.PI, 16, '#9CC8EE', 1);
+        g.fillStyle = '#FFFFFF'; g.fillRect(Math.round(np[0] - 4), Math.round(np[1] - (far ? 4 : 0)), 9, 4);
+        g.fillStyle = RED; g.fillRect(Math.round(np[0] - 4), Math.round(np[1] - (far ? 4 : 0)), 9, 1);
+      });
+    } else if (sport === 'mlb') {
+      var WH = '#FFFFFF';
+      var hp = PX(0, 0.05), fr = PX(0.9, 0.58), fl = PX(-0.9, 0.58);
+      plot(g, hp[0], hp[1], fr[0], fr[1], WH, 1);
+      plot(g, hp[0], hp[1], fl[0], fl[1], WH, 1);
+      wcurve(g, function (uu) { return [uu, fenceV(uu) + 0.004]; }, -1, 1, 60, '#1B3A8C', 2);
+      wpoly(g, [[1, 0], [1, 0.58]], '#1B3A8C', 2);
+      wpoly(g, [[-1, 0], [-1, 0.58]], '#1B3A8C', 2);
+      [[-1, 0.58], [1, 0.58]].forEach(function (c) {
+        var pp = PX(c[0], c[1]);
+        g.fillStyle = '#FFD23F'; g.fillRect(Math.round(pp[0]), Math.round(pp[1] - 7), 1, 7);
+      });
+      dot(g, 0.273, 0.209, WH, 3, 2);
+      dot(g, 0, 0.368, WH, 3, 2);
+      dot(g, -0.273, 0.209, WH, 3, 2);
+      dot(g, 0, 0.05, WH, 3, 2);
+      dot(g, 0, 0.2, WH, 3, 1);
+    }
+  }
+
+  function rails(g, ext) {
+    var i, e, c, col;
+    for (i = 0; i < ext.length; i++) {
+      e = ext[i];
+      if (e.l > e.r) continue;
+      if (sport === 'mlb') col = AD[(Math.floor(e.y / 4)) % 4];
+      else if (sport === 'nhl') col = '#EEF3F7';
+      else col = AD[(Math.floor(e.y / 4)) % 4];
+      if (sport === 'nhl') { col = '#9FB1C2'; }
+      g.fillStyle = col;
+      g.fillRect(e.l - 3, e.y, 2, 1);
+      g.fillRect(e.r + 2, e.y, 2, 1);
+    }
+    if (!ext.length) return;
+    var first = ext[0], last = ext[ext.length - 1];
+    if (sport !== 'mlb') {
+      for (c = first.l - 3; c <= first.r + 3; c++) {
+        g.fillStyle = sport === 'nhl' ? '#9FB1C2' : AD[Math.floor(c / 8) % 4];
+        g.fillRect(c, first.y - 2, 1, 2);
+      }
+      for (c = last.l - 3; c <= last.r + 3; c++) {
+        g.fillStyle = sport === 'nhl' ? '#9FB1C2' : AD[Math.floor(c / 8) % 4];
+        g.fillRect(c, last.y + 1, 1, 2);
+      }
+    }
+  }
+
+  function decor(g) {
+    var k;
+    if (sport === 'nfl' || sport === 'mlb') {
+      [[6, 4], [W - 12, 4], [Math.round(W * 0.3), 3], [Math.round(W * 0.7), 3]].forEach(function (p) {
+        g.fillStyle = '#FFFFFF'; g.fillRect(p[0], p[1], 6, 2);
+        g.fillStyle = '#FFF6B0'; g.fillRect(p[0] - 1, p[1] + 2, 8, 1);
+      });
+    } else {
+      var sw = 26, sx = Math.round(cx - sw / 2), sy = 3;
+      g.fillStyle = '#0A0B22'; g.fillRect(sx, sy, sw, 10);
+      g.fillStyle = '#FFD23F';
+      for (k = 0; k < 5; k++) g.fillRect(sx + 3 + k * 4, sy + 3, 2, 4);
+      g.fillStyle = '#E8334F'; g.fillRect(sx, sy + 10, sw, 1);
+    }
+  }
+
+  // ---------- Crowd ----------
+  function buildSeats() {
+    var rand = rng(sport.charCodeAt(0) * 977 + W * 31 + H);
+    var pal = VEN[sport].pal;
+    seats = [];
+    var y = 3;
+    while (y < H - 3) {
+      var near = y >= fy1;
+      var py = near ? 6 : 4, pxs = near ? 5 : 3;
+      var off = (Math.floor(y / py) % 2) * Math.floor(pxs / 2);
+      for (var x = 1 + off; x < W - 5; x += pxs) {
+        if (y > fy0 - 5 && y < fy1 + 4 && nearField(x + 1, y + 1, 4)) continue;
+        if (!near && Math.floor(x / pxs) % 10 === 0) continue;
+        var c = pal[Math.floor(rand() * pal.length)];
+        seats.push({
+          x: x, y: y, z: near ? 1 : 0, c: c, d: darken(c, 0.5),
+          sk: SKINS[Math.floor(rand() * SKINS.length)],
+          ph: Math.floor(rand() * 16), th: rand() < 0.5
+        });
+      }
+      y += py;
+    }
+  }
+
+  function drawSeat(g, s, e, mood, f) {
+    var x = s.x, y = s.y, dx = 0, dy = 0, arms = false, thumb = false, col = s.c;
+    if (e > 0.05) {
+      if (mood >= 0.45) {
+        if (((f + s.ph) % 4) < 2) { dy = e > 0.55 ? -2 : -1; arms = e > 0.3; }
+      } else if (mood > 0) {
+        if (((f + s.ph) % 8) < 2) dy = -1;
+      } else {
+        col = s.d;
+        if (e > 0.2) dy = 1;
+        if (mood <= -0.45 && e > 0.3) { dx = (((f >> 1) + s.ph) % 2) ? 1 : 0; thumb = s.th; }
+      }
+    } else if (((f + s.ph) % 17) === 0) dy = -1;
+    x += dx; y += dy;
+    if (s.z === 0) {
+      g.fillStyle = s.sk; g.fillRect(x, y, 2, 1);
+      g.fillStyle = col; g.fillRect(x, y + 1, 2, 2);
+      if (arms) { g.fillStyle = s.sk; g.fillRect(x - 1, y - 1, 1, 2); g.fillRect(x + 2, y - 1, 1, 2); }
+      if (thumb) { g.fillStyle = s.sk; g.fillRect(x + 2, y + 1, 1, 1); }
+    } else {
+      g.fillStyle = s.sk; g.fillRect(x + 1, y, 2, 2);
+      g.fillStyle = col; g.fillRect(x, y + 2, 4, 3);
+      if (arms) { g.fillStyle = s.sk; g.fillRect(x - 1, y - 1, 1, 3); g.fillRect(x + 4, y - 1, 1, 3); }
+      if (thumb) { g.fillStyle = s.sk; g.fillRect(x + 4, y + 2, 1, 2); }
+    }
+  }
+
+  // ---------- Runner ----------
+  function pathPoint(t) {
+    t = Math.max(0, Math.min(1, t));
+    if (sport === 'mlb') {
+      var pts = [[0, 0.05], [0.273, 0.209], [0, 0.368], [-0.273, 0.209], [0, 0.05]];
+      var seg = Math.min(3, Math.floor(t * 4)), f = t * 4 - seg;
+      var a = pts[seg], b = pts[seg + 1];
+      return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+    }
+    var lo = sport === 'nhl' ? 0.1 : (sport === 'nba' ? 0.1 : 0.07);
+    return [0, lo + (1 - 2 * lo) * t];
+  }
+
+  function drawRunner(g, f, e, mood) {
+    var uv = pathPoint(run.t), p = PX(uv[0], uv[1]);
+    var sc = (fy1 - fy0) > 140 && uv[1] < 0.45 ? 2 : 1;
+    var spr = sprites[runKey]; if (!spr) return;
+    var w = 12 * sc, h = 14 * sc;
+    var hop = 0;
+    if (e > 0.3 && mood >= 0.45) hop = ((f % 4) < 2) ? -2 * sc : 0;
+    else if (run.moving) hop = ((f >> 1) % 2) ? -1 : 0;
+    var x = Math.round(p[0] - w / 2), y = Math.round(p[1] - h + hop);
+    g.fillStyle = 'rgba(0,0,0,0.35)';
+    g.fillRect(Math.round(p[0] - w / 2 + sc), Math.round(p[1] - 1), w - 2 * sc, Math.max(1, sc));
+    g.imageSmoothingEnabled = false;
+    if (run.dir < 0) {
+      g.save(); g.translate(x + w, y); g.scale(-1, 1); g.drawImage(spr, 0, 0, w, h); g.restore();
+    } else g.drawImage(spr, x, y, w, h);
+  }
+
+  // ---------- Particles ----------
+  function spawn(e, mood, f) {
+    var rand = Math.random, i;
+    if (mood >= 0.45 && rx.spawned < 14) {
+      for (i = 0; i < 6; i++) parts.push({ x: rand() * W, y: -2 - rand() * 6, vx: (rand() - 0.5) * 0.6, vy: 0.5 + rand() * 0.9, c: CONFETTI[Math.floor(rand() * CONFETTI.length)], w: 1 + (rand() < 0.3 ? 1 : 0), type: 'c' });
+      rx.spawned++;
+    } else if (mood <= -0.45 && rx.spawned < 9) {
+      for (i = 0; i < 2; i++) {
+        var left = rand() < 0.5;
+        parts.push({ x: left ? rand() * (cx - hwNear - 4 > 6 ? cx - hwNear - 4 : 6) : cx + hwNear + 4 + rand() * 12, y: fy0 + rand() * (fy1 - fy0) * 0.8, vx: (left ? 1 : -1) * (0.4 + rand() * 0.7), vy: -1.6 - rand() * 0.8, c: TRASH[Math.floor(rand() * TRASH.length)], w: 1 + (rand() < 0.4 ? 1 : 0), type: 't' });
+      }
+      rx.spawned++;
+    }
+  }
+  function stepParts() {
+    for (var i = parts.length - 1; i >= 0; i--) {
+      var p = parts[i];
+      if (p.type === 'c') { p.x += p.vx + Math.sin((p.y + i) * 0.3) * 0.4; p.y += p.vy; }
+      else { p.x += p.vx; p.y += p.vy; p.vy += 0.18; }
+      if (p.y > H + 2 || (p.type === 't' && p.y > fy1 + 6)) parts.splice(i, 1);
+    }
+  }
+
+  // ---------- Public API ----------
+  S.init = function (canvas, SPRDATA) {
+    cv = canvas; ctx = cv.getContext('2d');
+    Object.keys(SPRDATA).forEach(function (k) {
+      var d = SPRDATA[k], c = S.mk(12, 14), g = c.getContext('2d');
+      d.rows.forEach(function (row, y) {
+        for (var x = 0; x < row.length; x++) {
+          var ch = row.charAt(x);
+          if (ch === '.') continue;
+          g.fillStyle = d.pal[ch]; g.fillRect(x, y, 1, 1);
+        }
+      });
+      sprites[k] = c;
+    });
+  };
+  S.configure = function (w, h, y0, y1, colW, nearFrac) {
+    W = w; H = h; cx = W / 2; fy0 = y0; fy1 = y1;
+    hwNear = nearFrac ? W * nearFrac : Math.min(W * 0.46, colW / 2 - 2);
+    hwFar = hwNear * VEN[sport].far;
+    if (cv) { cv.width = W; cv.height = H; }
+    buildStatic(); buildSeats();
+  };
+  S.setSport = function (k) {
+    sport = k;
+    hwFar = hwNear * VEN[sport].far;
+    if (W) { buildStatic(); buildSeats(); }
+  };
+  S.setRunnerKey = function (k) { runKey = k; };
+  S.reset = function () { run.t = 0; run.target = 0; run.dir = 1; rx.t0 = -99; parts = []; };
+  S.setTarget = function (t, instant) { run.target = Math.max(0, Math.min(1, t)); if (instant) run.t = run.target; };
+  S.react = function (mood) { rx.mood = mood; rx.t0 = clock; rx.spawned = 0; };
+  S.reactLevel = function () {
+    var age = clock - rx.t0, dur = 3.2;
+    if (age < 0 || age > dur) return 0;
+    return age < 0.3 ? age / 0.3 : 1 - (age - 0.3) / (dur - 0.3);
+  };
+
+  S.update = function (dt) {
+    clock += dt;
+    var before = run.t;
+    if (Math.abs(run.target - run.t) > 0.002) {
+      var step = 0.2 * dt;
+      var old = pathPoint(run.t)[0];
+      run.t += Math.sign(run.target - run.t) * Math.min(step, Math.abs(run.target - run.t));
+      var nu = pathPoint(run.t)[0];
+      if (sport === 'mlb' && Math.abs(nu - old) > 0.0005) run.dir = nu > old ? 1 : -1; else run.dir = 1;
+      run.moving = true;
+    } else { run.moving = false; run.dir = 1; }
+    stepParts();
+  };
+
+  S.render = function () {
+    if (!ctx || !staticCv) return;
+    var f = Math.floor(clock * FPS), e = S.reactLevel(), mood = rx.mood;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(staticCv, 0, 0);
+    for (var i = 0; i < seats.length; i++) drawSeat(ctx, seats[i], e, mood, f);
+    if (e > 0.05) spawn(e, mood, f);
+    if (e > 0.5 && mood >= 0.45) {
+      ctx.fillStyle = '#FFFFFF';
+      for (var k = 0; k < 8; k++) {
+        var s = seats[Math.floor(Math.random() * seats.length)];
+        if (s) ctx.fillRect(s.x, s.y - 1, 1, 1);
+      }
+    }
+    drawRunner(ctx, f, e, mood);
+    for (var j = 0; j < parts.length; j++) { ctx.fillStyle = parts[j].c; ctx.fillRect(Math.round(parts[j].x), Math.round(parts[j].y), parts[j].w, parts[j].w); }
+  };
+
+  S.tick = function (now) {
+    var dt = lastNow ? Math.min(0.25, now - lastNow) : 0;
+    lastNow = now;
+    S.update(dt);
+    S.render();
+  };
+  S.start = function () {
+    if (active) return;
+    active = true; lastNow = 0;
+    (function loop(ts) {
+      if (!active) return;
+      var now = ts / 1000;
+      if (lastDraw < 0 || now - lastDraw >= 1 / FPS) { lastDraw = now; S.tick(now); }
+      raf = requestAnimationFrame(loop);
+    })(performance.now());
+  };
+  S.stop = function () { active = false; if (raf) cancelAnimationFrame(raf); };
+  S.isField = isField;
+  S.pOfV = pOfV;
+  return S;
+})();
+if (typeof module !== 'undefined') module.exports = Scene;
+
+  // ---------- Data ----------
+  // Sets come from bank/bank.js (window.SPOT_ON_BANK), one per sport per date.
+  // Hand-made or random, every set there has passed the two-source check.
+  var SRC = window.SPOT_ON_BANK || { launch: '2026-10-15', days: {} };
+  var LABELS = { nfl: 'NFL', nba: 'NBA', nhl: 'NHL', mlb: 'MLB', mix: 'Mixed' };
+  var CALLOUT = { nfl: 'TOUCHDOWN!', nba: 'SLAM DUNK!', nhl: 'GOAL!', mlb: 'HOME RUN!', mix: 'PERFECT GAME!' };
+
+  // ---------- Daily schedule + saved progress ----------
+  // Puzzle #1 is launch day. Each day plays the set scheduled for that date (local time).
+  var LAUNCH = SRC.launch.split('-').map(Number); LAUNCH[1] -= 1; // months are 0-based
+  function dayKeyOf(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function todayKey() { return dayKeyOf(new Date()); }
+  function yesterdayKey() { var d = new Date(); d.setDate(d.getDate() - 1); return dayKeyOf(d); }
+  function puzzleNo() {
+    var n = new Date();
+    var days = Math.floor((Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) - Date.UTC(LAUNCH[0], LAUNCH[1], LAUNCH[2])) / 86400000);
+    return Math.max(1, days + 1);
+  }
+  function setFor(k) {
+    var day = SRC.days[todayKey()], set = day && day[k];
+    return set ? set.questions : null;
+  }
+
+  // Everything is kept in this browser only (no account, no server).
+  var STORE_KEY = 'spotOnDaily:v1', mem = null;
+  function load() {
+    if (mem) return mem;
+    try { mem = JSON.parse(localStorage.getItem(STORE_KEY)); } catch (e) { mem = null; }
+    if (!mem || typeof mem !== 'object') mem = {};
+    mem.days = mem.days || {};
+    mem.stats = mem.stats || {};
+    return mem;
+  }
+  function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(mem)); } catch (e) {} }
+  function todayRec(k) { var d = load().days[todayKey()]; return d && d[k] ? d[k] : null; }
+  function setTodayRec(k, rec) {
+    var db = load(), t = todayKey();
+    db.days[t] = db.days[t] || {};
+    db.days[t][k] = rec;
+    var keys = Object.keys(db.days).sort();
+    while (keys.length > 60) delete db.days[keys.shift()];
+    save();
+  }
+  function blankStats() { return { played: 0, total: 0, best: 0, streak: 0, maxStreak: 0, lastDay: null }; }
+  function statsFor(k) {
+    var s = load().stats[k] || blankStats();
+    var live = (s.lastDay === todayKey() || s.lastDay === yesterdayKey()) ? s.streak : 0;
+    return { played: s.played, total: s.total, best: s.best, streak: live, maxStreak: s.maxStreak };
+  }
+  function recordFinish(k, t) {
+    var db = load(), s = db.stats[k] || blankStats();
+    if (s.lastDay !== todayKey()) {
+      s.streak = s.lastDay === yesterdayKey() ? s.streak + 1 : 1;
+      s.played += 1;
+      s.total += t;
+      s.best = Math.max(s.best, t);
+      s.maxStreak = Math.max(s.maxStreak, s.streak);
+      s.lastDay = todayKey();
+    }
+    db.stats[k] = s;
+    save();
+  }
+  function msToMidnight() {
+    var n = new Date(), m = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
+    return m - n;
+  }
+  function fmtCountdown(ms) {
+    var sec = Math.max(0, Math.floor(ms / 1000));
+    var h = Math.floor(sec / 3600), mm = Math.floor(sec % 3600 / 60), ss = sec % 60;
+    return h + ':' + ('0' + mm).slice(-2) + ':' + ('0' + ss).slice(-2);
+  }
+
+  var Q = [];
+  var commitTyped = function () {}; // reads the guess box into state.val (set by showQuestion)
+  var MAXTOTAL = 1000;
+  var results = {};
+  var timerId = null;
+  var shoutId = null;
+  var resizeId = null;
+  var state = { i: 0, val: 0, phase: 'menu', scores: [], guesses: [], sport: 'nfl' };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var view = $('view'), progress = $('progress'), canvas = $('scene'), shout = $('shout');
+  var bgEl = $('bg'), menuMain = $('menuMain'), hudtop = $('hudtop'), board = $('boardBody');
+  var dockwrap = $('dockwrap'), dock = $('dock'), mid = $('mid');
+  var titleScreen = $('titleScreen'), attractId = null, attractCheer = null, attractIdx = 0;
+
+  function spriteSVG(key, px) {
+    var d = SPR[key], rects = '';
+    d.rows.forEach(function (row, y) {
+      var x = 0;
+      while (x < row.length) {
+        var c = row.charAt(x);
+        if (c === '.') { x++; continue; }
+        var x2 = x;
+        while (x2 < row.length && row.charAt(x2) === c) x2++;
+        rects += '<rect x="' + x + '" y="' + y + '" width="' + (x2 - x) + '" height="1" fill="' + d.pal[c] + '"/>';
+        x = x2;
+      }
+    });
+    return '<svg class="sprite" width="' + (12 * px) + '" height="' + (14 * px) +
+      '" viewBox="0 0 12 14" shape-rendering="crispEdges" aria-hidden="true">' + rects + '</svg>';
+  }
+
+  // ---------- Crowd sound (synthesized, off by default) ----------
+  var Sound = {
+    on: false, ctx: null, noise: null,
+    ensure: function () {
+      if (!this.ctx) {
+        try { var AC = window.AudioContext || window.webkitAudioContext; this.ctx = new AC(); } catch (e) { return false; }
+      }
+      if (this.ctx.state === 'suspended') { try { this.ctx.resume(); } catch (e2) {} }
+      if (!this.noise) {
+        var len = this.ctx.sampleRate * 2, buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate), d = buf.getChannelData(0);
+        for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+        this.noise = buf;
+      }
+      return true;
+    },
+    play: function (mood) {
+      if (!this.on || !this.ensure()) return;
+      var c = this.ctx, t = c.currentTime, amp = Math.min(1, Math.abs(mood) + 0.2), i;
+      if (mood >= 0.45) {
+        var out = c.createGain(); out.connect(c.destination);
+        var n = c.createBufferSource(); n.buffer = this.noise;
+        var bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.6;
+        bp.frequency.setValueAtTime(900, t); bp.frequency.linearRampToValueAtTime(1800, t + 0.5);
+        n.connect(bp); bp.connect(out);
+        out.gain.setValueAtTime(0.0001, t);
+        out.gain.linearRampToValueAtTime(0.35 * amp, t + 0.25);
+        out.gain.exponentialRampToValueAtTime(0.0001, t + 2.2);
+        n.start(t); n.stop(t + 2.3);
+      } else if (mood > 0) {
+        for (i = 0; i < 14; i++) {
+          var tt = t + i * 0.11 + Math.random() * 0.05;
+          var s = c.createBufferSource(); s.buffer = this.noise;
+          var hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2500;
+          var g = c.createGain();
+          g.gain.setValueAtTime(0.12 * amp, tt);
+          g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.05);
+          s.connect(hp); hp.connect(g); g.connect(c.destination);
+          s.start(tt, Math.random() * 1.5, 0.06);
+        }
+      } else {
+        var out2 = c.createGain(); out2.connect(c.destination);
+        var o = c.createOscillator(); o.type = 'sawtooth';
+        o.frequency.setValueAtTime(190, t); o.frequency.linearRampToValueAtTime(105, t + 1.5);
+        var lfo = c.createOscillator(); lfo.frequency.value = 6;
+        var lg = c.createGain(); lg.gain.value = 7; lfo.connect(lg); lg.connect(o.frequency);
+        var lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520;
+        o.connect(lp); lp.connect(out2);
+        out2.gain.setValueAtTime(0.0001, t);
+        out2.gain.linearRampToValueAtTime(0.16 * amp + 0.04, t + 0.3);
+        out2.gain.exponentialRampToValueAtTime(0.0001, t + 1.7);
+        o.start(t); lfo.start(t); o.stop(t + 1.8); lfo.stop(t + 1.8);
+      }
+    }
+  };
+  Array.prototype.forEach.call(document.querySelectorAll('.snd'), function (btn) {
+    btn.addEventListener('click', function () {
+      Sound.on = !Sound.on;
+      if (Sound.on) Sound.ensure();
+      Array.prototype.forEach.call(document.querySelectorAll('.snd'), function (b) {
+        b.textContent = Sound.on ? 'Sfx on' : 'Sfx off';
+        b.setAttribute('aria-pressed', Sound.on ? 'true' : 'false');
+      });
+    });
+  });
+
+  // ---------- Helpers ----------
+  $('dateLabel').textContent =
+    new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+
+  function fmt(n) { return Math.round(n).toLocaleString('en-US'); }
+  function score(g, q) {
+    // Ratio scoring: the miss is measured as how many times off you were, so 2x too high
+    // costs the same as 2x too low, on any size of stat. q.floor is a cushion added to
+    // both numbers so small counts (TDs, goals) aren't punished hard for being off by one.
+    // h is the ratio miss that costs half the points: 1 + pct x SPREAD (e.g. 15% off).
+    var SPREAD = 2.3;
+    // Small counts (TDs, goals, home runs): off by one is still a perfect 100.
+    if (q.actual < 100 && Math.abs(g - q.actual) <= 1) return 100;
+    var r = Math.abs(Math.log((g + q.floor) / (q.actual + q.floor)));
+    // Bullseye zone: within about 3% (after the cushion) is a perfect 100.
+    var BULLSEYE = Math.log(1.03);
+    if (r <= BULLSEYE) return 100;
+    var h = Math.log(1 + q.pct * SPREAD);
+    return Math.round(100 * Math.pow(0.5, Math.pow(r / h, 2)));
+  }
+  function total() {
+    return state.scores.reduce(function (s, v, k) { return s + v * Q[k].w; }, 0);
+  }
+  function surfOf(q) { return state.sport === 'mix' ? q.lg.toLowerCase() : state.sport; }
+
+  function renderProgress() {
+    progress.setAttribute('aria-label', state.phase === 'done'
+      ? 'All questions complete'
+      : 'Question ' + (state.i + 1) + ' of ' + Q.length);
+    progress.innerHTML = Q.map(function (q, k) {
+      var cls = k < state.scores.length ? 'done' : (k === state.i && state.phase !== 'done' ? 'now' : '');
+      return '<div class="seg ' + cls + '" style="flex:' + q.w + '">' + q.w + '×</div>';
+    }).join('');
+  }
+
+  // ---------- Stadium scene ----------
+  // The field fills the whole screen. Its far end sits just under the jumbotron,
+  // and the runner's starting spot sits just above the guess bar.
+  function layoutScene() {
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var ps = vw <= 560 ? 3 : Math.max(3, Math.round(vw / 190));
+    var W = Math.ceil(vw / ps), H = Math.ceil(vh / ps);
+    var bRect = $('board').getBoundingClientRect(), dRect = dock.getBoundingClientRect();
+    var fy0 = (bRect.bottom + 12) / ps;
+    var startY = (dRect.top - 16) / ps;
+    var p = Scene.pOfV(0.07);
+    var fy1 = (startY - p * fy0) / (1 - p);
+    var nf = Math.min(0.6, (Math.min(vw, 520) * 0.62 / ps) / W);
+    canvas.style.width = (W * ps) + 'px';
+    canvas.style.height = (H * ps) + 'px';
+    Scene.configure(W, H, fy0, fy1, Math.min(vw, 460) / ps, nf);
+    shout.style.top = Math.round((bRect.bottom + dRect.top) / 2 - 16) + 'px';
+    mid.style.top = Math.round(bRect.bottom + 16) + 'px';
+    mid.style.bottom = Math.round(vh - dRect.top + 16) + 'px';
+    layoutScene.w = vw; layoutScene.h = vh;
+  }
+  window.addEventListener('resize', function () {
+    if (state.phase === 'menu') return;
+    if (state.phase === 'title') { clearTimeout(resizeId); resizeId = setTimeout(layoutTitle, 150); return; }
+    clearTimeout(resizeId);
+    resizeId = setTimeout(function () {
+      if (Math.abs(window.innerWidth - layoutScene.w) > 4 || Math.abs(window.innerHeight - layoutScene.h) > 120) layoutScene();
+    }, 150);
+  });
+
+  function venueOf(k) { return k === 'mix' ? 'nfl' : k; }
+
+  function moodFor(s) {
+    if (s >= 75) return 0.5 + (s - 75) / 50;
+    if (s >= 50) return 0.15 + (s - 50) / 100;
+    if (s >= 25) return -0.2 - (49 - s) / 100;
+    return -0.5 - (25 - s) / 50;
+  }
+  function reactTo(s, label) {
+    var mood = moodFor(s);
+    var text = label || (s >= 100 ? 'SPOT ON!' : s >= 90 ? 'WOOOO!' : s >= 75 ? 'YEAH!' : s >= 50 ? 'NICE!' : s >= 25 ? 'MEH...' : 'BOOOO!');
+    var cls = mood >= 0.45 ? 'cheer' : mood > 0 ? 'clap' : mood > -0.45 ? 'meh' : 'boo';
+    Scene.react(mood);
+    Sound.play(mood);
+    shout.textContent = text;
+    shout.className = 'on ' + cls;
+    clearTimeout(shoutId);
+    shoutId = setTimeout(function () { shout.className = ''; }, 2400);
+  }
+
+  function updateHud(instant) {
+    var t = total();
+    var s = String(t);
+    while (s.length < 4) s = '0' + s;
+    $('hudScore').textContent = s;
+    Scene.setTarget(Math.min(1, t / MAXTOTAL), instant);
+  }
+
+  // ---------- Menu ----------
+  function startSport(k) {
+    var set = setFor(k);
+    if (!set) return;
+    Q = set;
+    MAXTOTAL = Q.reduce(function (s, q) { return s + q.w * 100; }, 0);
+    state = { i: 0, val: 0, phase: 'guess', scores: [], guesses: [], sport: k };
+    layoutScene.done = false;
+    document.body.dataset.sport = k;
+    bgEl.className = 'play';
+    menuMain.hidden = true;
+    canvas.hidden = false;
+    hudtop.hidden = false;
+    dockwrap.hidden = false;
+    mid.hidden = true;
+    $('hudScore').textContent = '0000';
+    dock.innerHTML = '<button class="primary" type="button" disabled>Loading</button>';
+    Scene.setSport(venueOf(k));
+    Scene.setRunnerKey(venueOf(k));
+    layoutScene();
+    Scene.reset();
+    Scene.start();
+    var rec = todayRec(k);
+    if (rec) {
+      state.scores = rec.scores.slice();
+      state.guesses = rec.guesses.slice();
+      state.i = Math.min(rec.scores.length, Q.length - 1);
+      updateHud(true);
+    }
+    if (rec && (rec.done || rec.scores.length >= Q.length)) showFinal(true);
+    else showQuestion();
+    window.scrollTo(0, 0);
+  }
+
+  function showMenu() {
+    clearInterval(timerId);
+    clearTimeout(shoutId);
+    shout.className = '';
+    stopAttract();
+    titleScreen.hidden = true;
+    Scene.stop();
+    state = { i: 0, val: 0, phase: 'menu', scores: [], guesses: [], sport: state.sport };
+    document.body.dataset.sport = 'menu';
+    bgEl.className = 'menu';
+    canvas.hidden = true;
+    menuMain.hidden = false;
+    hudtop.hidden = true;
+    dockwrap.hidden = true;
+    mid.hidden = true;
+    progress.innerHTML = '';
+    var order = ['nfl', 'nba', 'nhl', 'mlb', 'mix'];
+    var desc = { nfl: 'Football', nba: 'Basketball', nhl: 'Hockey', mlb: 'Baseball', mix: 'All four leagues in one set' };
+    view.innerHTML =
+      '<div class="panel howto">Spot On Daily #' + puzzleNo() + ', ' + $('dateLabel').textContent + '. Pick a set. Each has five stats, scored out of 1000. New sets every day at midnight.' +
+      '<div class="menu">' + order.map(function (k) {
+        var rec = todayRec(k), st = statsFor(k);
+        var none = !setFor(k);
+        var sub = none ? 'No set today. Check back tomorrow'
+          : rec && rec.done
+          ? 'Done today: ' + rec.total + (st.streak > 1 ? ', ' + st.streak + '-day streak' : '')
+          : rec ? 'In progress, ' + rec.scores.length + ' of 5' : desc[k];
+        var swatch = k === 'mix'
+          ? ['nfl', 'nba', 'nhl', 'mlb'].map(function (s) {
+              return '<div class="surf" data-surf="' + s + '">' + spriteSVG(s, 3) + '</div>';
+            }).join('')
+          : '<div class="surf" data-surf="' + k + '">' + spriteSVG(k, 3) + '</div>';
+        return '<button class="panel sport' + (k === 'mix' ? ' wide' : '') + '" type="button" data-s="' + k + '"' + (none ? ' disabled' : '') + '>' +
+          '<span class="swatch">' + swatch + '</span>' +
+          '<span class="sname">' + LABELS[k] + '</span><span class="sdesc">' + sub + '</span></button>';
+      }).join('') + '</div></div>' +
+      '<button class="secondary" id="sgMenu" type="button">Suggest a stat</button>' +
+      '<p class="fine">Fan-made game. Not affiliated with the NFL, NBA, NHL or MLB.</p>';
+    Array.prototype.forEach.call(view.querySelectorAll('.sport'), function (b) {
+      b.addEventListener('click', function () { startSport(b.dataset.s); });
+    });
+    $('sgMenu').addEventListener('click', function () { openSuggest(this); });
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- Question ----------
+  function fmtTime(sec) { return Math.floor(sec / 60) + ':' + ('0' + (sec % 60)).slice(-2); }
+
+  function showQuestion() {
+    var q = Q[state.i];
+    var surf = surfOf(q);
+    state.phase = 'guess';
+    state.val = 0;
+    renderProgress();
+    mid.hidden = true;
+    if (state.sport === 'mix') { Scene.setSport(surf); Scene.setRunnerKey(surf); }
+    $('hudQ').textContent = 'Q ' + (state.i + 1) + '/' + Q.length;
+
+    board.innerHTML =
+      '<p class="b-meta">Question ' + (state.i + 1) + ' of ' + Q.length + ', counts ' + q.w + '×</p>' +
+      '<p class="b-name">' + q.player + '</p>' +
+      '<p class="b-stat">' + (state.sport === 'mix' ? q.lg + ', ' : '') + q.season + ' regular season ' + q.stat + '</p>' +
+      '<p class="b-timer" id="tsec" role="timer" aria-label="Time left">1:00</p>';
+    dock.innerHTML =
+      '<input id="num" type="text" inputmode="numeric" pattern="[0-9,]*" placeholder="0" enterkeyhint="done" autocomplete="off" aria-label="Your guess for ' + q.player + ' ' + q.stat + '">' +
+      '<button class="primary lockb" id="lock" type="button" disabled>Lock</button>';
+    if (state.i === 0 && !layoutScene.done) { layoutScene(); layoutScene.done = true; }
+
+    var num = $('num');
+    var lockBtn = $('lock');
+
+    // Reads the typed number into state.val. Returns false if nothing was entered.
+    function commit() {
+      var d = num.value.replace(/\D/g, '');
+      if (d === '') return false;
+      state.val = Math.min(+d, 9999999);
+      num.value = fmt(state.val);
+      return true;
+    }
+
+    num.addEventListener('input', function () {
+      var d = num.value.replace(/\D/g, '');
+      num.value = d === '' ? '' : fmt(Math.min(+d, 9999999));
+      lockBtn.disabled = d === '';
+    });
+    num.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); if (commit()) lock(); }
+    });
+
+    // 60 seconds per question. When time runs out, whatever is typed is locked in (blank counts as 0).
+    // The start time is saved with today's progress, so leaving or reloading doesn't reset the clock.
+    var LIMIT = 60, rec = todayRec(state.sport) ||
+      { scores: state.scores.slice(), guesses: state.guesses.slice(), done: false, total: total() };
+    var resumed = rec.qStart && rec.qStart.i === state.i;
+    var started = resumed ? rec.qStart.t : Date.now();
+    if (!resumed) { rec.qStart = { i: state.i, t: started }; setTodayRec(state.sport, rec); }
+    commitTyped = commit;
+    var tsec = $('tsec');
+    clearInterval(timerId);
+    function tick() {
+      var left = Math.max(0, LIMIT - (Date.now() - started) / 1000);
+      tsec.textContent = fmtTime(Math.ceil(left));
+      tsec.classList.toggle('low', left <= 10);
+      if (left <= 0) {
+        clearInterval(timerId);
+        if (state.phase === 'guess') { commit(); lock(true); }
+      }
+    }
+    tick();
+    timerId = setInterval(tick, 250);
+
+    lockBtn.addEventListener('click', function () { if (commit()) lock(); });
+  }
+
+  function lock(timedOut) {
+    if (state.phase !== 'guess') return;
+    state.phase = 'reveal';
+    clearInterval(timerId);
+    var num = $('num');
+    if (num) num.blur();
+    var q = Q[state.i];
+    var g = state.val, a = q.actual, s = score(g, q);
+    state.guesses.push(g);
+    state.scores.push(s);
+    setTodayRec(state.sport, { scores: state.scores.slice(), guesses: state.guesses.slice(), done: false, total: total() });
+    renderProgress();
+
+    var pts = s * q.w;
+    board.innerHTML =
+      '<p class="b-meta">' + q.player + ', ' + q.stat + '</p>' +
+      '<p class="b-score"><span>' + s + '</span>/100</p>' +
+      '<p class="b-stat">You ' + fmt(g) + ', actual ' + fmt(a) + '</p>' +
+      (timedOut
+        ? '<p class="b-pts late">Time ran out. +' + pts + ' points</p>'
+        : '<p class="b-pts">+' + pts + ' points</p>');
+
+    // The runner advances by the points just earned, and the crowd reacts to the guess.
+    updateHud();
+    reactTo(s);
+
+    var last = state.i === Q.length - 1;
+    dock.innerHTML = '<button class="primary" id="next" type="button">' + (last ? 'See final score' : 'Next question') + '</button>';
+    $('next').addEventListener('click', function () {
+      if (last) showFinal();
+      else { state.i++; showQuestion(); }
+    });
+  }
+
+  // ---------- Final ----------
+  function countUp(el, to) {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.textContent = to; return;
+    }
+    var t0 = performance.now(), d = 1000;
+    (function f(t) {
+      var p = Math.min(1, (t - t0) / d);
+      el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(f);
+    })(t0);
+  }
+
+  function showFinal(resumed) {
+    state.phase = 'done';
+    renderProgress();
+    $('hudQ').textContent = 'Final';
+    var t = total();
+    var already = todayRec(state.sport);
+    if (!(already && already.done)) {
+      setTodayRec(state.sport, { scores: state.scores.slice(), guesses: state.guesses.slice(), done: true, total: t });
+      recordFinish(state.sport, t);
+    }
+    var st = statsFor(state.sport);
+    var tier = t >= 750 ? 'Deep in scoring range.' : t >= 500 ? 'Made it past midfield.' : 'Stalled out early.';
+    var rows = Q.map(function (q, k) {
+      return '<li><div><strong>' + q.player + '</strong>' +
+        '<span class="bq">' + (state.sport === 'mix' ? q.lg + ', ' : '') + q.season + ' regular season ' + q.stat + '</span>' +
+        '<span>Guess ' + fmt(state.guesses[k]) + ', actual ' + fmt(q.actual) + '</span></div>' +
+        '<div class="pts"><b>' + state.scores[k] + '</b><span>× ' + q.w + '</span></div></li>';
+    }).join('');
+
+    board.innerHTML =
+      '<p class="b-meta">' + (t >= 900 ? CALLOUT[state.sport] : 'Final score') + '</p>' +
+      '<p class="b-score"><span id="finalNum">0</span>/' + MAXTOTAL + '</p>' +
+      '<p class="b-stat">' + (t >= 900 ? 'Straight into the end zone.' : tier) + '</p>' +
+      '<p class="b-pts" id="status" role="status"></p>';
+    mid.innerHTML =
+      '<div class="panel"><div class="statrow">' +
+        '<div><b>' + st.played + '</b><span>Played</span></div>' +
+        '<div><b>' + (st.played ? Math.round(st.total / st.played) : 0) + '</b><span>Average</span></div>' +
+        '<div><b>' + st.best + '</b><span>Best</span></div>' +
+        '<div><b>' + st.streak + '</b><span>Streak</span></div>' +
+      '</div><p class="next">Next ' + LABELS[state.sport] + ' set in <b id="cd">' + fmtCountdown(msToMidnight()) + '</b></p></div>' +
+      '<div class="panel"><ul class="breakdown">' + rows + '</ul></div>' +
+      '<button class="secondary" id="sgFinal" type="button">Suggest a stat</button>';
+    mid.hidden = false;
+    $('sgFinal').addEventListener('click', function () { openSuggest(this); });
+    dock.innerHTML =
+      '<button class="primary" id="share" type="button">Copy score</button>' +
+      '<button class="secondary" id="again" type="button">Other sports</button>';
+
+    countUp($('finalNum'), t);
+    clearInterval(timerId);
+    timerId = setInterval(function () {
+      var ms = msToMidnight(), el = $('cd');
+      if (!el) { clearInterval(timerId); return; }
+      el.textContent = fmtCountdown(ms);
+      if (ms < 1000) { clearInterval(timerId); showMenu(); }
+    }, 1000);
+    // Final whistle: the crowd gives its verdict on the whole set.
+    if (!resumed) reactTo(t / 10, t >= 900 ? CALLOUT[state.sport] : (t >= 500 ? 'GOOD GAME!' : 'TOUGH ONE...'));
+
+    var shareText = 'Spot On Daily #' + puzzleNo() + ' ' + LABELS[state.sport] + ': ' + t + '/' + MAXTOTAL +
+      (st.streak > 1 ? ' (' + st.streak + '-day streak)' : '');
+    var status = $('status');
+
+    $('share').addEventListener('click', function () {
+      function fallback() {
+        try {
+          var ta = document.createElement('textarea');
+          ta.value = shareText;
+          ta.style.position = 'fixed'; ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          var ok = document.execCommand('copy');
+          document.body.removeChild(ta);
+          status.textContent = ok ? 'Copied: ' + shareText : shareText;
+        } catch (e) {
+          status.textContent = shareText;
+        }
+      }
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(shareText).then(function () {
+            status.textContent = 'Copied: ' + shareText;
+          }, fallback);
+        } else { fallback(); }
+      } catch (e) { fallback(); }
+    });
+
+    $('again').addEventListener('click', showMenu);
+  }
+
+  // ---------- Suggest a stat ----------
+  // Goes to Netlify Forms (see the suggest-stat form in the page). Stat names match the
+  // question bank, so an approved suggestion can be typed straight into `make`.
+  var SUGGEST_STATS = {
+    NFL: ['passing yards', 'passing TDs', 'interceptions thrown', 'completions', 'rushing yards', 'rushing TDs',
+          'carries', 'receptions', 'receiving yards', 'receiving TDs', 'yards from scrimmage',
+          'rushing + receiving TDs', 'interceptions', 'solo tackles', 'sacks'],
+    NBA: ['points', 'rebounds', 'assists', 'steals', 'blocks', 'three-pointers made', 'free throws made',
+          'games played', 'triple-doubles', 'double-doubles'],
+    NHL: ['goals', 'assists', 'points', 'penalty minutes', 'games played', 'power-play goals',
+          'game-winning goals', 'shots on goal', 'wins (goalie)', 'shutouts'],
+    MLB: ['home runs', 'hits', 'RBIs', 'runs', 'doubles', 'triples', 'stolen bases', 'walks',
+          'strikeouts (batting)', 'strikeouts', 'wins', 'saves', 'complete games', 'shutouts']
+  };
+  var STAT_TEXT = { MLB: { strikeouts: 'strikeouts (pitching)', wins: 'wins (pitching)' } };
+  var sgModal = $('suggestModal'), sgForm = $('suggestForm'), sgLeague = $('sgLeague'), sgStat = $('sgStat'),
+      sgSeason = $('sgSeason'), sgStatus = $('sgStatus'), sgSend = $('sgSend'), sgOpener = null;
+
+  function sgSay(text, kind) { sgStatus.textContent = text; sgStatus.className = 'sgstatus' + (kind ? ' ' + kind : ''); }
+  function openSuggest(opener) {
+    sgOpener = opener;
+    sgSay('');
+    sgModal.hidden = false;
+    sgLeague.focus();
+  }
+  function closeSuggest() {
+    sgModal.hidden = true;
+    if (sgOpener && document.body.contains(sgOpener)) sgOpener.focus();
+  }
+  function sgFillStats() {
+    var lg = sgLeague.value, two = lg === 'NBA' || lg === 'NHL';
+    sgStat.innerHTML = lg
+      ? '<option value="">Pick a stat</option>' + SUGGEST_STATS[lg].map(function (s) {
+          return '<option value="' + s + '">' + ((STAT_TEXT[lg] || {})[s] || s) + '</option>';
+        }).join('')
+      : '<option value="">Pick a league first</option>';
+    sgStat.disabled = !lg;
+    sgSeason.placeholder = two ? '2015-16' : '2022';
+    sgSeason.inputMode = two ? 'text' : 'numeric';
+  }
+  function sgSeasonError() {
+    var v = sgSeason.value.trim(), lg = sgLeague.value;
+    if (lg === 'NBA' || lg === 'NHL') {
+      var m = /^(\d{4})-(\d{2})$/.exec(v);
+      return m && (+m[1] + 1) % 100 === +m[2] ? '' : lg + ' seasons look like 2015-16';
+    }
+    return /^\d{4}$/.test(v) ? '' : 'Seasons look like 2022';
+  }
+
+  sgLeague.addEventListener('change', function () { sgFillStats(); sgSeason.setCustomValidity(''); });
+  sgSeason.addEventListener('input', function () { sgSeason.setCustomValidity(''); });
+  $('sgClose').addEventListener('click', closeSuggest);
+  sgModal.addEventListener('click', function (e) { if (e.target === sgModal) closeSuggest(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !sgModal.hidden) closeSuggest(); });
+  sgForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    sgSeason.setCustomValidity(sgLeague.value ? sgSeasonError() : '');
+    if (!sgForm.reportValidity()) return;
+    sgSend.disabled = true;
+    sgSay('Sending...');
+    fetch('/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(new FormData(sgForm)).toString()
+    }).then(function (r) {
+      if (!r.ok) throw new Error(r.status);
+      sgForm.reset();
+      sgFillStats();
+      sgSay('Thanks! Your stat is in the review pile.', 'ok');
+    }).catch(function () {
+      sgSay("Couldn't send that. Check your connection and try again.", 'err');
+    }).then(function () { sgSend.disabled = false; });
+  });
+
+  // ---------- Title screen (attract mode) ----------
+  // The stadium cycles through all four venues; the runner sprints the length of
+  // the field and the crowd erupts, like an arcade cabinet waiting for a player.
+  var ATTRACT = ['nfl', 'nba', 'nhl', 'mlb'];
+  function layoutTitle() {
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var ps = vw <= 560 ? 3 : Math.max(3, Math.round(vw / 190));
+    var W = Math.ceil(vw / ps), H = Math.ceil(vh / ps);
+    var fy0 = (vh * 0.34) / ps, startY = (vh * 0.74) / ps;
+    var p = Scene.pOfV(0.07), fy1 = (startY - p * fy0) / (1 - p);
+    var nf = Math.min(0.6, (Math.min(vw, 520) * 0.62 / ps) / W);
+    canvas.style.width = (W * ps) + 'px';
+    canvas.style.height = (H * ps) + 'px';
+    Scene.configure(W, H, fy0, fy1, Math.min(vw, 460) / ps, nf);
+  }
+  function attractLoop() {
+    var v = ATTRACT[attractIdx % ATTRACT.length];
+    attractIdx++;
+    Scene.setSport(v);
+    Scene.setRunnerKey(v);
+    Scene.reset();
+    Scene.setTarget(1);
+    clearTimeout(attractCheer);
+    attractCheer = setTimeout(function () { Scene.react(0.9); }, 4600);
+  }
+  function stopAttract() {
+    clearInterval(attractId);
+    clearTimeout(attractCheer);
+    attractId = null;
+  }
+  function showTitle() {
+    state.phase = 'title';
+    document.body.dataset.sport = 'title';
+    bgEl.className = 'play';
+    menuMain.hidden = true;
+    hudtop.hidden = true;
+    dockwrap.hidden = true;
+    mid.hidden = true;
+    titleScreen.hidden = false;
+    canvas.hidden = false;
+    var avail = ['nfl', 'nba', 'nhl', 'mlb', 'mix'].filter(function (k) { return setFor(k); });
+    var left = avail.filter(function (k) { var r = todayRec(k); return !(r && r.done); }).length;
+    $('titleDate').textContent = '#' + puzzleNo() + '. ' + $('dateLabel').textContent + '. ' +
+      (left ? left + ' of ' + avail.length + ' sets left today.' : 'All done. Back tomorrow.');
+    Scene.setSport('nfl');
+    layoutTitle();
+    stopAttract();
+    attractIdx = 0;
+    attractLoop();
+    attractId = setInterval(attractLoop, 7000);
+    Scene.start();
+  }
+
+  $('start').addEventListener('click', function () {
+    if (Sound.on) Sound.ensure();
+    showMenu();
+  });
+  $('howBtn').addEventListener('click', function () {
+    var p = $('howPanel');
+    p.hidden = !p.hidden;
+    this.setAttribute('aria-expanded', p.hidden ? 'false' : 'true');
+  });
+  // Leaving mid-question locks in whatever is typed, so backing out can't buy extra time.
+  $('back').addEventListener('click', function () {
+    if (state.phase === 'guess') {
+      if (!window.confirm('Leave this question? Your answer locks in as typed (blank counts as 0).')) return;
+      commitTyped();
+      lock();
+    }
+    showMenu();
+  });
+  Scene.init(canvas, SPR);
+  showTitle();
+
+})();
+</script>
+</body>
+</html>
