@@ -4,6 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Spot On Daily</title>
+<meta name="description" content="Guess the stat. A daily sports game: five real NFL, NBA, NHL and MLB stats, 60 seconds each, scored out of 1000.">
+<meta name="theme-color" content="#0E1030">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<!-- Link previews (iMessage, group chats, social) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Spot On Daily">
+<meta property="og:title" content="Spot On Daily: Guess the stat">
+<meta property="og:description" content="Five real sports stats a day. How close can you get?">
+<meta property="og:url" content="https://spotondaily.com/">
+<meta property="og:image" content="https://spotondaily.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Spot On Daily scoreboard over a pixel stadium">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
@@ -1615,7 +1630,8 @@ if (typeof module !== 'undefined') module.exports = Scene;
 
     var pts = s * q.w;
     board.innerHTML =
-      '<p class="b-meta">' + q.player + ', ' + q.stat + '</p>' +
+      '<p class="b-meta">' + q.player + ', ' + (state.sport === 'mix' ? q.lg + ', ' : '') +
+        q.season + ' regular season ' + q.stat + '</p>' +
       '<p class="b-score"><span>' + s + '</span>/100</p>' +
       '<p class="b-stat">You ' + fmt(g) + ', actual ' + fmt(a) + '</p>' +
       (timedOut
@@ -1682,8 +1698,9 @@ if (typeof module !== 'undefined') module.exports = Scene;
       '<button class="secondary" id="sgFinal" type="button">Suggest a stat</button>';
     mid.hidden = false;
     $('sgFinal').addEventListener('click', function () { openSuggest(this); });
+    var canShare = !!navigator.share && window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
     dock.innerHTML =
-      '<button class="primary" id="share" type="button">Copy score</button>' +
+      '<button class="primary" id="share" type="button">' + (canShare ? 'Share score' : 'Copy score') + '</button>' +
       '<button class="secondary" id="again" type="button">Other sports</button>';
 
     countUp($('finalNum'), t);
@@ -1698,7 +1715,7 @@ if (typeof module !== 'undefined') module.exports = Scene;
     if (!resumed) reactTo(t / 10, t >= 900 ? CALLOUT[state.sport] : (t >= 500 ? 'GOOD GAME!' : 'TOUGH ONE...'));
 
     var shareText = 'Spot On Daily #' + puzzleNo() + ' ' + LABELS[state.sport] + ': ' + t + '/' + MAXTOTAL +
-      (st.streak > 1 ? ' (' + st.streak + '-day streak)' : '');
+      (st.streak > 1 ? ' (' + st.streak + '-day streak)' : '') + '\nspotondaily.com';
     var status = $('status');
 
     $('share').addEventListener('click', function () {
@@ -1711,15 +1728,24 @@ if (typeof module !== 'undefined') module.exports = Scene;
           ta.select();
           var ok = document.execCommand('copy');
           document.body.removeChild(ta);
-          status.textContent = ok ? 'Copied: ' + shareText : shareText;
+          status.textContent = ok ? 'Copied! Paste it anywhere.' : shareText;
         } catch (e) {
           status.textContent = shareText;
         }
       }
+      // Phones: open the share sheet (Messages, group chats...). Cancelling it does nothing.
+      if (canShare) {
+        navigator.share({ text: shareText }).then(function () {
+          status.textContent = 'Shared!';
+        }, function (e) {
+          if (!e || e.name !== 'AbortError') fallback();
+        });
+        return;
+      }
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(shareText).then(function () {
-            status.textContent = 'Copied: ' + shareText;
+            status.textContent = 'Copied! Paste it anywhere.';
           }, fallback);
         } else { fallback(); }
       } catch (e) { fallback(); }

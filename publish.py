@@ -60,6 +60,9 @@ def main():
     with open(os.path.join(SITE, "index.html"), "w", encoding="utf-8") as f:
         f.write(html)
     shutil.copyfile(BANK, os.path.join(SITE, "bank.js"))
+    for name in sorted(os.listdir(os.path.dirname(GAME))):  # images: og.png, icons
+        if name != "index.html":
+            shutil.copyfile(os.path.join(os.path.dirname(GAME), name), os.path.join(SITE, name))
     with open(os.path.join(SITE, "_headers"), "w", encoding="utf-8") as f:
         f.write(HEADERS)
     with open(os.path.join(SITE, "_redirects"), "w", encoding="utf-8") as f:
@@ -78,7 +81,7 @@ def main():
         elif unbroken:
             last_full = day
     if last_full:
-        print("Every sport has a set through %s. Re-run export + publish before then." % last_full)
+        print("Every sport has a set through %s (the daily GitHub job keeps this two weeks ahead)." % last_full)
     else:
         print("  WARNING  today is missing sets")
     for g in gaps:

@@ -33,7 +33,11 @@ Goal: publish as a website, later monetize with ads or a subscription.
   A hand-made set that fails verification gets a random backup until it's fixed. A sport with no set that day is greyed out.
   Finished sets lock with a countdown to midnight; progress saves after every answer.
 - Saved locally (localStorage key `spotOnDaily:v1`): today's answers, per-sport played/avg/best/streak.
-- Share text: "Spot On Daily #N NFL: 742/1000 (3-day streak)". Final score only, no emoji grid.
+- Share text: "Spot On Daily #N NFL: 742/1000 (3-day streak)" + newline + "spotondaily.com". Final score only, no emoji grid.
+  Phones (coarse pointer + navigator.share) get "Share score" (native share sheet); others get "Copy score".
+- Result card after each answer and the final breakdown show the full question (league in Mixed, season, stat).
+- Link previews: og/twitter meta tags with og.png (1200x630); favicon.png + apple-touch-icon.png. All images live in
+  game/ (drawn by `tools/make_images.py`) and publish.py copies every file in game/ into site/.
 
 ## Look and feel
 - Retro pixel arcade: Press Start 2P + VT323 fonts, hard square borders, offset block shadows, stepped animation.
