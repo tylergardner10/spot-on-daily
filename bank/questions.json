@@ -123,7 +123,9 @@
             "fact": null
           }
         ],
-        "status": "ready"
+        "status": "ready",
+        "date": "2026-10-30",
+        "scheduledBy": "random"
       },
       {
         "id": "nfl-0002",
@@ -7719,7 +7721,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-10-30",
+        "scheduledBy": "random"
       },
       {
         "id": "nba-0016",
@@ -10564,7 +10568,9 @@
             },
             "fact": "Led the NHL in 1993-94."
           }
-        ]
+        ],
+        "date": "2026-10-30",
+        "scheduledBy": "random"
       },
       {
         "id": "nhl-0020",
@@ -12584,7 +12590,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-10-30",
+        "scheduledBy": "random"
       },
       {
         "id": "mlb-0016",
@@ -14003,7 +14011,9 @@
             },
             "fact": "Led the NFL in 2000."
           }
-        ]
+        ],
+        "date": "2026-10-30",
+        "scheduledBy": "random"
       },
       {
         "id": "mix-0007",
