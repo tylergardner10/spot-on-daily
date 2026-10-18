@@ -599,7 +599,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-10-31",
+        "scheduledBy": "random"
       },
       {
         "id": "nfl-0006",
@@ -6418,7 +6420,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-10-31",
+        "scheduledBy": "random"
       },
       {
         "id": "nba-0005",
@@ -9737,7 +9741,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-10-31",
+        "scheduledBy": "random"
       },
       {
         "id": "nhl-0013",
@@ -12118,7 +12124,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-10-31",
+        "scheduledBy": "random"
       },
       {
         "id": "mlb-0012",
@@ -14249,7 +14257,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-10-31",
+        "scheduledBy": "random"
       },
       {
         "id": "mix-0009",
