@@ -2639,7 +2639,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-11-01",
+        "scheduledBy": "random"
       },
       {
         "id": "nfl-0024",
@@ -7489,7 +7491,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-11-01",
+        "scheduledBy": "random"
       },
       {
         "id": "nba-0014",
@@ -8674,7 +8678,9 @@
             },
             "fact": "Tied for the NHL lead in 2022-23."
           }
-        ]
+        ],
+        "date": "2026-11-01",
+        "scheduledBy": "random"
       },
       {
         "id": "nhl-0003",
@@ -11055,7 +11061,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-11-01",
+        "scheduledBy": "random"
       },
       {
         "id": "mlb-0003",
@@ -14852,7 +14860,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-11-01",
+        "scheduledBy": "random"
       },
       {
         "id": "mix-0014",
