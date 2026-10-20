@@ -3841,7 +3841,9 @@
             },
             "fact": "Tied for the NFL lead in 1999."
           }
-        ]
+        ],
+        "date": "2026-11-02",
+        "scheduledBy": "random"
       },
       {
         "id": "nfl-0034",
@@ -7374,7 +7376,9 @@
             },
             "fact": "Led the NBA in 2001-02."
           }
-        ]
+        ],
+        "date": "2026-11-02",
+        "scheduledBy": "random"
       },
       {
         "id": "nba-0013",
@@ -9630,7 +9634,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-11-02",
+        "scheduledBy": "random"
       },
       {
         "id": "nhl-0012",
@@ -12489,7 +12495,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-11-02",
+        "scheduledBy": "random"
       },
       {
         "id": "mlb-0015",
@@ -13791,7 +13799,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-11-02",
+        "scheduledBy": "random"
       },
       {
         "id": "mix-0005",
