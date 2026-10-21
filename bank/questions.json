@@ -3724,7 +3724,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-11-03",
+        "scheduledBy": "random"
       },
       {
         "id": "nfl-0033",
@@ -8207,7 +8209,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-11-03",
+        "scheduledBy": "random"
       },
       {
         "id": "nba-0020",
@@ -10705,7 +10709,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-11-03",
+        "scheduledBy": "random"
       },
       {
         "id": "nhl-0021",
@@ -12971,7 +12977,9 @@
             },
             "fact": "Led the MLB in 2014."
           }
-        ]
+        ],
+        "date": "2026-11-03",
+        "scheduledBy": "random"
       },
       {
         "id": "mlb-0019",
@@ -13563,7 +13571,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-11-03",
+        "scheduledBy": "random"
       },
       {
         "id": "mix-0003",
