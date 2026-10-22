@@ -243,7 +243,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-11-04",
+        "scheduledBy": "random"
       },
       {
         "id": "nfl-0003",
@@ -7973,7 +7975,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-11-04",
+        "scheduledBy": "random"
       },
       {
         "id": "nba-0018",
@@ -13215,7 +13219,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-11-04",
+        "scheduledBy": "random"
       },
       {
         "id": "mlb-0021",
@@ -15832,7 +15838,9 @@
             },
             "fact": "Tied for the NFL lead in 2019."
           }
-        ]
+        ],
+        "date": "2026-11-04",
+        "scheduledBy": "random"
       }
     ]
   }
