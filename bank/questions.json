@@ -5487,7 +5487,9 @@
             },
             "fact": null
           }
-        ]
+        ],
+        "date": "2026-11-07",
+        "scheduledBy": "random"
       },
       {
         "id": "nfl-0048",
