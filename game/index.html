@@ -19,6 +19,21 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Spot On Daily scoreboard over a pixel stadium">
 <meta name="twitter:card" content="summary_large_image">
+<!-- Google Analytics 4. Paste the Measurement ID (Admin > Data streams) into GA_ID.
+     Only loads on the live site, so local previews and Netlify deploy previews aren't counted. -->
+<script>
+  var GA_ID = 'G-CDTEEXVPN0';
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  if (/^G-[A-Z0-9]+$/.test(GA_ID) && GA_ID !== 'G-XXXXXXXXXX' && /(^|\.)spotondaily\.com$/.test(location.hostname)) {
+    var gaScript = document.createElement('script');
+    gaScript.async = true;
+    gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+    document.head.appendChild(gaScript);
+    gtag('js', new Date());
+    gtag('config', GA_ID);
+  }
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
@@ -1497,7 +1512,10 @@ if (typeof module !== 'undefined') module.exports = Scene;
       updateHud(true);
     }
     if (rec && (rec.done || rec.scores.length >= Q.length)) showFinal(true);
-    else showQuestion();
+    else {
+      if (!rec) gtag('event', 'set_start', { sport: k });
+      showQuestion();
+    }
     window.scrollTo(0, 0);
   }
 
@@ -1672,6 +1690,7 @@ if (typeof module !== 'undefined') module.exports = Scene;
     if (!(already && already.done)) {
       setTodayRec(state.sport, { scores: state.scores.slice(), guesses: state.guesses.slice(), done: true, total: t });
       recordFinish(state.sport, t);
+      gtag('event', 'set_complete', { sport: state.sport, score: t });
     }
     var st = statsFor(state.sport);
     var tier = t >= 750 ? 'Deep in scoring range.' : t >= 500 ? 'Made it past midfield.' : 'Stalled out early.';
@@ -1719,6 +1738,7 @@ if (typeof module !== 'undefined') module.exports = Scene;
     var status = $('status');
 
     $('share').addEventListener('click', function () {
+      gtag('event', 'share', { sport: state.sport, method: canShare ? 'share_sheet' : 'copy' });
       function fallback() {
         try {
           var ta = document.createElement('textarea');

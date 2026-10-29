@@ -66,4 +66,6 @@ Goal: publish as a website, later monetize with ads or a subscription.
 - Mismatches are settled by a third source (Wikipedia, which cites Sports Reference): the wrong value is kept
   under `overridden`. nflverse drifts a few units on pre-2010 seasons; ESPN missed MLB's 1999 Hack Wilson revision.
 - Answers for the next 14 days are readable in bank.js (fine for friends; hiding them needs a server).
-- Not built yet: backend (percentiles, leaderboards), analytics, ads, "report an issue" link, suggestion review command.
+- Analytics: Google Analytics 4 (`GA_ID` in game/index.html head; loads only on spotondaily.com). Events: set_start,
+  set_complete (sport, score), share (sport, method).
+- Not built yet: backend (percentiles, leaderboards), ads, "report an issue" link, suggestion review command.
