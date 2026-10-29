@@ -962,7 +962,7 @@ GEN = {
         "complete_games": 8, "shutouts": 4,
     }},
     "NHL": {"first": 1985, "tiers": [
-        {"name": "easy", "stats": ["goals", "points"], "since": 2000, "ranks": 2},
+        {"name": "easy", "stats": ["goals", "points"], "since": 2000, "ranks": 3},  # top 2 ran dry Oct 2026
         {"name": "medium", "stats": ["assists", "ppg"], "since": 1990, "ranks": 3},
         {"name": "hard", "stats": ["pim", "gwg", "shots", "goalie_wins", "shutouts"],
          "ranks": 5, "old": ["goals", "points", "assists"], "old_until": 1999},
