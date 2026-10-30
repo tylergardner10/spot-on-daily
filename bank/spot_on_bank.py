@@ -941,9 +941,10 @@ def cmd_export(args):
 # Each new question then goes through fetch + verify; ones that fail are swapped out.
 # ---------------------------------------------------------------------------
 PLAN = ["easy", "easy", "medium", "hard", "hard"]
-# Difficulty comes from era as well as stat: easy and medium lean to modern seasons (from "modern" on),
-# hard leans to older ones (up to "old_until"). It's a preference, not a limit: when an era runs out,
-# picks fall back to the rest of the pool.
+# Difficulty comes from era as well as stat: easy and medium lean to modern seasons (from "modern" on).
+# Hard rotates through three kinds: older seasons (up to "old_until"), recent players' below-typical
+# seasons (from "modern" on), and injury-shortened seasons from the last INJURY_YEARS seasons.
+# Era is a preference, not a limit: when a kind runs out, picks fall back to the rest of the pool.
 # Hard asks big, wide-ranging stats from well-known players' seasons (top 15, with lower minimums
 # in "hard_min"), so the answer can't be bluffed from what a league leader usually gets. Small counts
 # (interceptions, shutouts, game-winning goals...) stay out of hard: a typical guess lands within one.
@@ -1000,6 +1001,17 @@ GEN = {
 HARD_PCT = 0.20      # the game's default margin on the two hard questions (DEFAULT_PCT)
 HARD_BLIND_MAX = 80  # a hard question must score under this for someone who types the stat's typical value
 PLAYER_CAP = 2       # a player appears at most this often in a sport's unscheduled pool + next 14 days
+INJURY_YEARS = 5     # injury questions come from the last 5 completed seasons
+INJURY_GAMES = 0.6   # ... where the player played at most 60% of the season's games
+INJURY_DROP = 0.65   # ... and the stat was at most 65% of the player's usual full-season number
+HARD_KINDS = ["old", "recent", "injury"]  # rotation order for hard questions; "mid" fills in after
+
+
+def games_played(league, row, stat):
+    """Games that count toward a stat: MLB pitching stats use starts."""
+    if league == "MLB":
+        return row.get("_starts" if STATS["MLB"][stat]["group"] == "pitching" else "_games", 0)
+    return row.get("_games" if league == "NFL" else "games", 0)
 NHL_LEADER_FIELDS = {
     "skater": {"goals": "goals", "assists": "assists", "points": "points", "pim": "penaltyMinutes",
                "games": "gamesPlayed", "ppg": "ppGoals", "gwg": "gameWinningGoals", "shots": "shots"},
@@ -1026,7 +1038,7 @@ def season_table(league, year):
     if league == "NFL":
         out = []
         for r in nfl_rows(year):
-            d = {"player": r["player_display_name"], "playerId": r["player_id"]}
+            d = {"player": r["player_display_name"], "playerId": r["player_id"], "_games": float(r.get("games") or 0)}
             for key, spec in STATS["NFL"].items():
                 d[key] = sum(float(r.get(c) or 0) for c in spec["cols"])
             out.append(d)
@@ -1039,6 +1051,8 @@ def season_table(league, year):
             for sp in (data.get("stats") or [{}])[0].get("splits", []):
                 pid = str(sp["player"]["id"])
                 d = rows.setdefault(pid, {"player": sp["player"]["fullName"], "playerId": pid})
+                d["_games" if group == "hitting" else "_starts"] = float(
+                    sp["stat"].get("gamesPlayed" if group == "hitting" else "gamesStarted") or 0)
                 for key, spec in STATS["MLB"].items():
                     if spec["group"] == group:
                         d[key] = d.get(key, 0) + float(sp["stat"].get(spec["field"]) or 0)
@@ -1091,6 +1105,8 @@ def candidates(league, first, last):
     cfg = GEN[league]
     out = {t["name"]: [] for t in cfg["tiers"]}
     famous = set()  # players who were top 3 in any of the league's stats in some season
+    hard = next(t for t in cfg["tiers"] if t["name"] == "hard")
+    history = {}    # (playerId, stat) -> [(year, value, share of the season's games, row)]
     for year in range(first, last + 1):
         try:
             rows = season_table(league, year)
@@ -1100,6 +1116,13 @@ def candidates(league, first, last):
         for stat in STATS[league]:
             top = sorted((r[stat] for r in rows if r.get(stat)), reverse=True)[:3]
             famous.update(str(r["playerId"]) for r in rows if top and r.get(stat, 0) >= top[-1])
+        for stat in hard["stats"]:
+            # season length: the 3rd-highest games count, so a stray total row (nflverse has one) can't skew it
+            full = (sorted((games_played(league, r, stat) for r in rows), reverse=True)[2:3] or [0])[0]
+            for r in rows:
+                if full and r.get(stat) is not None:
+                    history.setdefault((str(r["playerId"]), stat), []).append(
+                        (year, r[stat], games_played(league, r, stat) / full, r))
         for tier in cfg["tiers"]:
             if year < tier.get("since", 0):
                 continue
@@ -1119,8 +1142,52 @@ def candidates(league, first, last):
                         "season": season_label(league, year), "stat": stat, "value": int(v),
                         "rank": rank, "tied": values.count(v) > 1, "tier": tier["name"],
                     })
+    out["hard"] += injury_candidates(league, history, last, cfg)
     out["hard"] = hard_filter([c for c in out["hard"] if str(c["playerId"]) in famous])
+    for c in out["hard"]:
+        c.setdefault("kind", hard_kind(c))
     return out
+
+
+def injury_candidates(league, history, last, cfg):
+    """Recent seasons a regular producer lost to injury: few games played, well under their usual number."""
+    out = []
+    for (pid, stat), seasons in history.items():
+        full = [v for y, v, share, r in seasons if share >= 0.75]
+        if len(full) < 2:
+            continue
+        usual = statistics.median(full)
+        if usual < cfg["hard_min"].get(stat, 0):
+            continue
+        by_year = {y: (v, share) for y, v, share, r in seasons}
+
+        def healthy(y):  # a full, productive season
+            v, share = by_year.get(y, (0, 0))
+            return share >= 0.75 and v >= 0.8 * usual
+
+        for year, v, share, r in seasons:
+            # lost to injury, not a benching or a career winding down: healthy the year before and back the year after
+            if not (healthy(year - 1) and healthy(year + 1)):
+                continue
+            if year > last - INJURY_YEARS and 0.25 <= share <= INJURY_GAMES \
+                    and 0.2 * usual <= v <= INJURY_DROP * usual and not v % 1:
+                games = games_played(league, r, stat)
+                out.append({
+                    "league": league, "player": r["player"], "playerId": r["playerId"],
+                    "season": season_label(league, year), "stat": stat, "value": int(v), "rank": 99,
+                    "tied": False, "tier": "hard", "kind": "injury", "usual": int(usual),
+                    "games": int(games), "full": int(round(games / share)),
+                })
+    return out
+
+
+def hard_kind(c):
+    year, g = int(c["season"][:4]), GEN[c["league"]]
+    if year <= g["old_until"]:
+        return "old"
+    if year >= g["modern"] and c["blind"] < HARD_BLIND_MAX and c["value"] < c.get("typical", c["value"] + 1):
+        return "recent"
+    return "mid"
 
 
 def guess_score(g, actual, floor, pct):
@@ -1138,11 +1205,13 @@ def hard_filter(pool):
     """Keeps hard candidates that someone typing the stat's typical value would miss."""
     by_stat = {}
     for c in pool:
-        by_stat.setdefault(c["stat"], []).append(c["value"])
+        if c.get("kind") != "injury":
+            by_stat.setdefault(c["stat"], []).append(c["value"])
     kept = []
     for c in pool:
-        typical = statistics.median(by_stat[c["stat"]])
+        typical = statistics.median(by_stat.get(c["stat"]) or [c["value"]])
         floor = STATS[c["league"]][c["stat"]].get("floor", 0)
+        c["typical"] = typical
         c["blind"] = guess_score(typical, c["value"], floor, HARD_PCT)
         if c["blind"] < HARD_BLIND_MAX:
             kept.append(c)
@@ -1153,14 +1222,19 @@ def hard_ok(q):
     """Whether a question fits the current hard rules (stat and minimum; the blind-guess gate is checked at pick time)."""
     tier = next(t for t in GEN[q["league"]]["tiers"] if t["name"] == "hard")
     v = (q.get("source") or {}).get("value")
+    if q.get("kind") == "injury":  # a lost season is meant to be under the usual minimum
+        return q["stat"] in tier["stats"] and v is not None
     return q["stat"] in tier["stats"] and v is not None and v >= GEN[q["league"]]["hard_min"].get(q["stat"], 0)
 
 
 def era_sort(pools):
-    """Puts each tier's preferred era first (easy/medium: modern, hard: old). Keeps the shuffle within an era."""
+    """Easy/medium: modern seasons first. Hard: rotate old / recent / injury. Keeps the shuffle within each group."""
     for tier, pool in pools.items():
-        if tier == "hard":
-            pool.sort(key=lambda c: int(c["season"][:4]) > GEN[c["league"]]["old_until"])
+        if tier == "hard":  # old, recent, injury, old, recent, injury... then the in-between seasons
+            kinds = {k: [c for c in pool if c.get("kind") == k] for k in HARD_KINDS}
+            rot = [kinds[k][n] for n in range(max(map(len, kinds.values()), default=0))
+                   for k in HARD_KINDS if n < len(kinds[k])]
+            pool[:] = rot + [c for c in pool if c.get("kind") not in HARD_KINDS]
         else:
             pool.sort(key=lambda c: int(c["season"][:4]) < GEN[c["league"]]["modern"])
 
@@ -1216,7 +1290,8 @@ def gen_question(c):
         "playerId": c["playerId"], "tolerance": None, "source": None,
         "reference": {"value": None, "url": None, "checkedOn": None,
                       "hint": REF_SITES[c["league"]] + urllib.parse.quote_plus(c["player"])},
-        "fact": lead_fact(c),
+        "fact": ("Played only %d of %d games." % (c["games"], c["full"])) if c.get("kind") == "injury" else lead_fact(c),
+        "kind": c.get("kind"),
     }
 
 

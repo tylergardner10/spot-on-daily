@@ -56,10 +56,12 @@ Goal: publish as a website, later monetize with ads or a subscription.
   source agree. Second source = ESPN via `verify` (automatic); where ESPN has no data, Wikipedia (cites Sports Reference)
   or a manual Sports Reference check.
 - Whole-number counting stats only. Regular season only.
-- Tiers (`GEN` in spot_on_bank.py): easy/medium are league leaders and lean modern (last ~12 seasons first);
-  hard leans old (pre-2010 NFL, pre-2008 NBA, pre-2006 NHL, pre-2000 MLB) and uses big wide-range stats from
-  well-known players' top-15 seasons. Hard must pass a guessability gate: typing the stat's typical value must
-  score under 80 (`HARD_BLIND_MAX`). Small counts (INTs, shutouts, GWG, goalie wins, triples) never go in hard.
+- Tiers (`GEN` in spot_on_bank.py): easy/medium are league leaders and lean modern (last ~12 seasons first).
+  Hard uses big wide-range stats from well-known players' top-15 (NFL top-25) seasons and rotates three kinds:
+  older seasons (pre-2010 NFL, pre-2008 NBA, pre-2006 NHL, pre-2000 MLB), recent players' below-typical seasons,
+  and injury seasons from the last 5 (few games, well under the player's usual, healthy the seasons before and
+  after; fact says "Played only X of Y games."). Hard must pass a guessability gate: typing the stat's typical
+  value must score under 80 (`HARD_BLIND_MAX`). Small counts (INTs, shutouts, GWG, goalie wins, triples) never go in hard.
 - Variety: a player appears at most 2 times (`PLAYER_CAP`) in a sport's unscheduled sets + next 14 days.
   `rework --hard --variety` re-picks questions in unscheduled sets under the current rules.
 - NFL data (nflverse) starts in 1999. NBA steals/blocks start in 1973-74.
