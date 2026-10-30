@@ -18,6 +18,8 @@ Daily sets:
 Other commands:
   python spot_on_bank.py find "Wayne Gretzky" --league NHL   -> look up player IDs
   python spot_on_bank.py stats                               -> list stat keys per league
+  python spot_on_bank.py generate --league nhl --count 30    -> auto-build verified sets from season leaderboards
+  python spot_on_bank.py rework --league all --hard --variety -> re-pick questions in unscheduled sets
 
 Data sources (source #1):
   NFL  nflverse season files (GitHub), 1999 onward
@@ -35,7 +37,9 @@ import datetime as dt
 import io
 import json
 import os
+import math
 import random
+import statistics
 import sys
 import time
 import urllib.parse
@@ -937,49 +941,65 @@ def cmd_export(args):
 # Each new question then goes through fetch + verify; ones that fail are swapped out.
 # ---------------------------------------------------------------------------
 PLAN = ["easy", "easy", "medium", "hard", "hard"]
+# Difficulty comes from era as well as stat: easy and medium lean to modern seasons (from "modern" on),
+# hard leans to older ones (up to "old_until"). It's a preference, not a limit: when an era runs out,
+# picks fall back to the rest of the pool.
+# Hard asks big, wide-ranging stats from well-known players' seasons (top 15, with lower minimums
+# in "hard_min"), so the answer can't be bluffed from what a league leader usually gets. Small counts
+# (interceptions, shutouts, game-winning goals...) stay out of hard: a typical guess lands within one.
 GEN = {
-    "NFL": {"first": 1999, "tiers": [
+    "NFL": {"first": 1999, "modern": 2014, "old_until": 2009, "tiers": [
         {"name": "easy", "stats": ["passing_yards", "rushing_yards", "receiving_yards", "passing_tds"],
-         "since": 2008, "ranks": 2},
+         "since": 2008, "ranks": 3},
         {"name": "medium", "stats": ["receiving_tds", "rushing_tds", "receptions", "scrimmage_yards", "total_tds"],
          "since": 2003, "ranks": 3},
-        {"name": "hard", "stats": ["def_interceptions", "interceptions_thrown", "carries", "completions"],
-         "ranks": 5, "old": ["passing_yards", "rushing_yards", "receiving_yards"], "old_until": 2007},
+        {"name": "hard", "stats": ["passing_yards", "rushing_yards", "receiving_yards", "completions",
+                                   "receptions", "scrimmage_yards"], "ranks": 25},  # 15 ran dry
     ], "min": {  # keeps answers big enough to be interesting
         "passing_yards": 3500, "rushing_yards": 1000, "receiving_yards": 1000, "passing_tds": 25,
         "receiving_tds": 9, "rushing_tds": 9, "total_tds": 12, "receptions": 80, "scrimmage_yards": 1400,
-        "def_interceptions": 5, "interceptions_thrown": 15, "carries": 250, "completions": 300,
+        "completions": 300,
+    }, "hard_min": {
+        "passing_yards": 2500, "rushing_yards": 600, "receiving_yards": 600, "completions": 200,
+        "receptions": 50, "scrimmage_yards": 900,
     }},
-    "MLB": {"first": 1960, "tiers": [
-        {"name": "easy", "stats": ["home_runs", "hits", "strikeouts"], "since": 1990, "ranks": 2},
+    "MLB": {"first": 1960, "modern": 2012, "old_until": 1999, "tiers": [
+        {"name": "easy", "stats": ["home_runs", "hits", "strikeouts"], "since": 1990, "ranks": 3},
         {"name": "medium", "stats": ["rbi", "runs", "wins", "saves", "doubles", "stolen_bases"],
          "since": 1980, "ranks": 3},
-        {"name": "hard", "stats": ["walks", "triples", "strikeouts_batting", "complete_games", "shutouts"],
-         "ranks": 5, "old": ["home_runs", "hits", "strikeouts", "stolen_bases"], "old_until": 1989},
+        {"name": "hard", "stats": ["hits", "strikeouts", "walks", "stolen_bases", "rbi", "home_runs",
+                                   "strikeouts_batting"], "ranks": 15},
     ], "min": {
         "home_runs": 35, "hits": 190, "strikeouts": 220, "rbi": 110, "runs": 110, "wins": 18, "saves": 35,
-        "doubles": 40, "stolen_bases": 40, "walks": 100, "triples": 10, "strikeouts_batting": 150,
-        "complete_games": 8, "shutouts": 4,
+        "doubles": 40, "stolen_bases": 40,
+    }, "hard_min": {
+        "hits": 140, "strikeouts": 140, "walks": 60, "stolen_bases": 20, "rbi": 70, "home_runs": 20,
+        "strikeouts_batting": 100,
     }},
-    "NHL": {"first": 1985, "tiers": [
+    "NHL": {"first": 1985, "modern": 2014, "old_until": 2005, "tiers": [
         {"name": "easy", "stats": ["goals", "points"], "since": 2000, "ranks": 3},  # top 2 ran dry Oct 2026
         {"name": "medium", "stats": ["assists", "ppg"], "since": 1990, "ranks": 3},
-        {"name": "hard", "stats": ["pim", "gwg", "shots", "goalie_wins", "shutouts"],
-         "ranks": 5, "old": ["goals", "points", "assists"], "old_until": 1999},
+        {"name": "hard", "stats": ["points", "assists", "goals", "pim"], "ranks": 15},  # ESPN has no shots before ~2000
     ], "min": {
-        "goals": 40, "points": 90, "assists": 60, "ppg": 15, "pim": 200, "gwg": 9, "shots": 300,
-        "goalie_wins": 35, "shutouts": 7,
+        "goals": 40, "points": 90, "assists": 60, "ppg": 15,
+    }, "hard_min": {
+        "points": 55, "assists": 35, "goals": 25, "pim": 120,
     }},
-    "NBA": {"first": 1996, "tiers": [  # stats.nba.com season totals start in 1996-97
-        {"name": "easy", "stats": ["points", "rebounds", "assists", "threes_made"], "since": 2005, "ranks": 2},
+    "NBA": {"first": 1996, "modern": 2014, "old_until": 2007, "tiers": [  # stats.nba.com totals start in 1996-97
+        {"name": "easy", "stats": ["points", "rebounds", "assists", "threes_made"], "since": 2005, "ranks": 3},
         {"name": "medium", "stats": ["steals", "blocks", "triple_doubles", "double_doubles"], "ranks": 3},
-        {"name": "hard", "stats": ["free_throws_made"],
-         "ranks": 5, "old": ["points", "rebounds", "assists", "threes_made"], "old_until": 2004},
+        {"name": "hard", "stats": ["points", "rebounds", "assists", "threes_made", "steals", "blocks"],
+         "ranks": 15},
     ], "min": {
         "points": 1800, "rebounds": 800, "assists": 550, "threes_made": 180, "steals": 140, "blocks": 150,
-        "triple_doubles": 6, "double_doubles": 45, "free_throws_made": 500,
+        "triple_doubles": 6, "double_doubles": 45,
+    }, "hard_min": {
+        "points": 1200, "rebounds": 500, "assists": 350, "threes_made": 100, "steals": 90, "blocks": 80,
     }},
 }
+HARD_PCT = 0.20      # the game's default margin on the two hard questions (DEFAULT_PCT)
+HARD_BLIND_MAX = 80  # a hard question must score under this for someone who types the stat's typical value
+PLAYER_CAP = 2       # a player appears at most this often in a sport's unscheduled pool + next 14 days
 NHL_LEADER_FIELDS = {
     "skater": {"goals": "goals", "assists": "assists", "points": "points", "pim": "penaltyMinutes",
                "games": "gamesPlayed", "ppg": "ppGoals", "gwg": "gameWinningGoals", "shots": "shots"},
@@ -1070,17 +1090,21 @@ def candidates(league, first, last):
     """Every question worth asking, by tier: {tier: [{league, player, playerId, season, stat, value, rank, tied}]}."""
     cfg = GEN[league]
     out = {t["name"]: [] for t in cfg["tiers"]}
+    famous = set()  # players who were top 3 in any of the league's stats in some season
     for year in range(first, last + 1):
         try:
             rows = season_table(league, year)
         except Exception as e:  # missing season, network trouble: skip that year
             print("  skipped %s %s: %s" % (league, season_label(league, year), e))
             continue
+        for stat in STATS[league]:
+            top = sorted((r[stat] for r in rows if r.get(stat)), reverse=True)[:3]
+            famous.update(str(r["playerId"]) for r in rows if top and r.get(stat, 0) >= top[-1])
         for tier in cfg["tiers"]:
             if year < tier.get("since", 0):
                 continue
-            stats = tier["stats"] + (tier.get("old", []) if year <= tier.get("old_until", -1) else [])
-            for stat in stats:
+            mins = cfg["hard_min"] if tier["name"] == "hard" else cfg["min"]
+            for stat in tier["stats"]:
                 ranked = sorted((r for r in rows if r.get(stat)), key=lambda r: -r[stat])
                 values = [r[stat] for r in ranked]
                 for r in ranked:
@@ -1088,14 +1112,57 @@ def candidates(league, first, last):
                     rank = 1 + values.index(v)  # ties share a rank
                     if rank > tier["ranks"]:
                         break
-                    if v < cfg["min"].get(stat, 0) or v % 1:
+                    if v < mins.get(stat, 0) or v % 1:
                         continue
                     out[tier["name"]].append({
                         "league": league, "player": r["player"], "playerId": r["playerId"],
                         "season": season_label(league, year), "stat": stat, "value": int(v),
-                        "rank": rank, "tied": values.count(v) > 1,
+                        "rank": rank, "tied": values.count(v) > 1, "tier": tier["name"],
                     })
+    out["hard"] = hard_filter([c for c in out["hard"] if str(c["playerId"]) in famous])
     return out
+
+
+def guess_score(g, actual, floor, pct):
+    """The game's score() (game/index.html), for checking how far a blind guess gets."""
+    if actual < 100 and abs(g - actual) <= 1:
+        return 100
+    r = abs(math.log((g + floor) / (actual + floor)))
+    if r <= math.log(1.03):
+        return 100
+    h = math.log(1 + pct * 2.3)
+    return round(100 * 0.5 ** ((r / h) ** 2))
+
+
+def hard_filter(pool):
+    """Keeps hard candidates that someone typing the stat's typical value would miss."""
+    by_stat = {}
+    for c in pool:
+        by_stat.setdefault(c["stat"], []).append(c["value"])
+    kept = []
+    for c in pool:
+        typical = statistics.median(by_stat[c["stat"]])
+        floor = STATS[c["league"]][c["stat"]].get("floor", 0)
+        c["blind"] = guess_score(typical, c["value"], floor, HARD_PCT)
+        if c["blind"] < HARD_BLIND_MAX:
+            kept.append(c)
+    return kept
+
+
+def hard_ok(q):
+    """Whether a question fits the current hard rules (stat and minimum; the blind-guess gate is checked at pick time)."""
+    tier = next(t for t in GEN[q["league"]]["tiers"] if t["name"] == "hard")
+    v = (q.get("source") or {}).get("value")
+    return q["stat"] in tier["stats"] and v is not None and v >= GEN[q["league"]]["hard_min"].get(q["stat"], 0)
+
+
+def era_sort(pools):
+    """Puts each tier's preferred era first (easy/medium: modern, hard: old). Keeps the shuffle within an era."""
+    for tier, pool in pools.items():
+        if tier == "hard":
+            pool.sort(key=lambda c: int(c["season"][:4]) > GEN[c["league"]]["old_until"])
+        else:
+            pool.sort(key=lambda c: int(c["season"][:4]) < GEN[c["league"]]["modern"])
 
 
 def lead_fact(c):
@@ -1109,13 +1176,32 @@ def cand_key(c):
     return (c["league"], norm(c["player"]), str(c["season"]), c["stat"])
 
 
-def pick_question(pool, picked, used, mix):
+def player_key(q):
+    return (q["league"], norm(q["player"]))
+
+
+def player_uses(bank, sport, skip=()):
+    """How often each player appears in the sport's unscheduled sets and the next 14 days' sets."""
+    horizon = (dt.date.today() + dt.timedelta(days=14)).isoformat()
+    uses = {}
+    for s in bank["sets"].get(sport, []):
+        if s.get("id") in skip or (s.get("date") and not today() <= s["date"] < horizon):
+            continue
+        for q in s["questions"]:
+            uses[player_key(q)] = uses.get(player_key(q), 0) + 1
+    return uses
+
+
+def pick_question(pool, picked, used, mix, uses=None):
     """Takes the first candidate that fits next to the questions already picked."""
     for c in pool:
         if cand_key(c) in used:
             continue
-        if any(p["league"] == c["league"] and (str(p["playerId"]) == str(c["playerId"]) or p["stat"] == c["stat"])
-               for p in picked):
+        if uses is not None and uses.get(player_key(c), 0) >= PLAYER_CAP:
+            continue
+        if any(p["league"] == c["league"] and (str(p["playerId"]) == str(c["playerId"])
+                                               or (p["stat"] == c["stat"] and p.get("tier") == c.get("tier")))
+               for p in picked):  # one player per set; a stat repeats only across tiers (easy vs hard eras)
             continue
         if mix and sum(1 for p in picked if p["league"] == c["league"]) >= 2:
             continue
@@ -1134,8 +1220,9 @@ def gen_question(c):
     }
 
 
-def verify_generated(path, sport, ids, pools, used, rounds=4):
-    """fetch + verify the new sets, swap out failing questions, drop sets that never pass."""
+def verify_generated(path, sport, ids, pools, used, uses=None, originals=None, rounds=4):
+    """fetch + verify the sets, swap out failing questions. A set that never passes is dropped,
+    or put back as it was when its original is in `originals` (rework)."""
     todo = list(ids)
     for n in range(rounds):
         if not todo:
@@ -1155,30 +1242,32 @@ def verify_generated(path, sport, ids, pools, used, rounds=4):
             bad = sorted({int(m[len(sid) + 2:].split(" ")[0]) - 1
                           for m in errors + pending if m.startswith(sid + " q")})
             for b in bad:
-                others = [{"league": q["league"], "playerId": q.get("playerId"), "stat": q["stat"]}
+                others = [{"league": q["league"], "playerId": q.get("playerId"), "stat": q["stat"],
+                           "tier": PLAN[j]}
                           for j, q in enumerate(s["questions"]) if j != b]
-                c = pick_question(pools[PLAN[b]], others, used, sport == "mix")
+                c = pick_question(pools[PLAN[b]], others, used, sport == "mix", uses)
                 if c:
+                    if uses is not None:
+                        uses[player_key(s["questions"][b])] -= 1
+                        uses[player_key(c)] = uses.get(player_key(c), 0) + 1
                     s["questions"][b] = gen_question(c)
                     used[cand_key(c)] = sid
         save_bank(path, bank)
     bank = load_bank(path)
     _, _, _, ready = check_bank(bank, verbose=False)
-    dropped = [sid for sid in ids if sid not in ready]
-    bank["sets"][sport] = [s for s in bank["sets"][sport] if s["id"] not in dropped]
+    failed = [sid for sid in ids if sid not in ready]
+    if originals:
+        bank["sets"][sport] = [originals[s["id"]] if s["id"] in failed else s for s in bank["sets"][sport]]
+    else:
+        bank["sets"][sport] = [s for s in bank["sets"][sport] if s["id"] not in failed]
     save_bank(path, bank)
-    if dropped:
-        print("  dropped %d sets that couldn't be fully verified: %s" % (len(dropped), ", ".join(dropped)))
-    return len(ids) - len(dropped)
+    if failed:
+        print("  %s %d sets that couldn't be fully verified: %s"
+              % ("kept the old version of" if originals else "dropped", len(failed), ", ".join(failed)))
+    return len(ids) - len(failed)
 
 
-def cmd_generate(args):
-    choice = args.league.lower()
-    sports = SPORTS if choice == "all" else [choice]
-    if any(s not in SPORTS for s in sports):
-        sys.exit("--league must be one of %s, or all" % ", ".join(SPORTS))
-    leagues = LEAGUES if "mix" in sports else [s.upper() for s in sports]
-    rnd = random.Random(args.seed)
+def build_pools(leagues, args, rnd):
     pools = {}
     for league in leagues:
         cfg = GEN[league]
@@ -1187,16 +1276,53 @@ def cmd_generate(args):
         pools[league] = candidates(league, first, last)
         for p in pools[league].values():
             rnd.shuffle(p)
+        hard = pools[league]["hard"]
+        if hard:
+            print("  %d hard candidates; a blind guess averages %.0f/100 on them"
+                  % (len(hard), statistics.mean(c["blind"] for c in hard)))
+    return pools
+
+
+def sport_pools(pools, sport, rnd):
+    if sport == "mix":  # every league's candidates, max 2 questions per league in a set
+        tier_pools = {t: [c for lg in LEAGUES for c in pools[lg][t]] for t in set(PLAN)}
+        for p in tier_pools.values():
+            rnd.shuffle(p)
+    else:
+        tier_pools = {t: list(p) for t, p in pools[sport.upper()].items()}
+    for t, p in tier_pools.items():  # rotate through the stats so no one stat dominates a tier
+        by_stat = {}
+        for c in p:
+            by_stat.setdefault((c["league"], c["stat"]), []).append(c)
+        if t == "hard":  # alternate seasons above and below the stat's typical value, so answers don't cluster
+            for key, r in by_stat.items():
+                mid = statistics.median(c["value"] for c in r)
+                hi, lo = [c for c in r if c["value"] >= mid], [c for c in r if c["value"] < mid]
+                by_stat[key] = [x for pair in zip(hi, lo) for x in pair] + hi[len(lo):] + lo[len(hi):]
+        rows = list(by_stat.values())
+        p[:] = [r[k] for k in range(max(map(len, rows), default=0)) for r in rows if k < len(r)]
+    era_sort(tier_pools)
+    return tier_pools
+
+
+def parse_sports(choice):
+    sports = SPORTS if choice.lower() == "all" else [x.strip() for x in choice.lower().split(",")]
+    if any(s not in SPORTS for s in sports):
+        sys.exit("--league must be one of %s (comma-separated), or all" % ", ".join(SPORTS))
+    return sports
+
+
+def cmd_generate(args):
+    sports = parse_sports(args.league)
+    leagues = LEAGUES if "mix" in sports else [s.upper() for s in sports]
+    rnd = random.Random(args.seed)
+    pools = build_pools(leagues, args, rnd)
 
     for sport in sports:
         bank = load_bank(args.bank)
         used = used_questions(bank)
-        if sport == "mix":  # every league's candidates, max 2 questions per league in a set
-            tier_pools = {t: [c for lg in LEAGUES for c in pools[lg][t]] for t in set(PLAN)}
-            for p in tier_pools.values():
-                rnd.shuffle(p)
-        else:
-            tier_pools = pools[sport.upper()]
+        uses = player_uses(bank, sport)
+        tier_pools = sport_pools(pools, sport, rnd)
         sets = bank["sets"].setdefault(sport, [])
         nums = [int(s["id"].split("-")[-1]) for s in sets if s.get("id", "").split("-")[-1].isdigit()]
         next_num = max(nums + [0]) + 1
@@ -1204,17 +1330,20 @@ def cmd_generate(args):
         for _ in range(args.count):
             picked = []
             for tier in PLAN:
-                c = pick_question(tier_pools[tier], picked, used, sport == "mix")
+                c = pick_question(tier_pools[tier], picked, used, sport == "mix", uses)
                 if not c:
                     break
                 picked.append(c)
             if len(picked) < len(PLAN):
+                for c in picked:  # put back the partial set's picks
+                    tier_pools[PLAN[picked.index(c)]].insert(0, c)
                 print("  ran out of fresh %s questions after %d sets" % (sport, len(new_ids)))
                 break
             sid = "%s-%04d" % (sport, next_num)
             next_num += 1
             for c in picked:
                 used[cand_key(c)] = sid
+                uses[player_key(c)] = uses.get(player_key(c), 0) + 1
             sets.append({"id": sid, "status": "draft", "generated": today(),
                          "questions": [gen_question(c) for c in picked]})
             new_ids.append(sid)
@@ -1222,8 +1351,60 @@ def cmd_generate(args):
         if args.no_check:
             print("Added %d %s sets (not checked yet: run fetch and verify)." % (len(new_ids), sport))
             continue
-        kept = verify_generated(args.bank, sport, new_ids, tier_pools, used)
+        kept = verify_generated(args.bank, sport, new_ids, tier_pools, used, uses)
         print("Added %d verified %s sets." % (kept, sport))
+
+
+def cmd_rework(args):
+    """Re-picks questions in unscheduled generated sets under the current rules, then re-verifies them."""
+    if not (args.hard or args.variety):
+        sys.exit("say what to redo: --hard, --variety, or both")
+    sports = parse_sports(args.league)
+    leagues = LEAGUES if "mix" in sports else [s.upper() for s in sports]
+    rnd = random.Random(args.seed)
+    pools = build_pools(leagues, args, rnd)
+    for sport in sports:
+        bank = load_bank(args.bank)
+        targets = [s for s in bank["sets"].get(sport, []) if not s.get("date") and not s.get("handmade")]
+        if not targets:
+            print("No unscheduled %s sets to rework." % sport)
+            continue
+        ids = [s["id"] for s in targets]
+        originals = json.loads(json.dumps({s["id"]: s for s in targets}))
+        used = used_questions(bank)
+        uses = player_uses(bank, sport, skip=set(ids))  # the scheduled 14 days; targets are added back as kept
+        tier_pools = sport_pools(pools, sport, rnd)
+        changed, short = [], 0
+        for s in targets:
+            redo = set()
+            if args.hard:
+                redo = {i for i in (3, 4) if args.again or not s.get("reworked") or not hard_ok(s["questions"][i])}
+            for i, q in enumerate(s["questions"]):
+                if i not in redo and args.variety and uses.get(player_key(q), 0) >= PLAYER_CAP:
+                    redo.add(i)
+                if i not in redo:
+                    uses[player_key(q)] = uses.get(player_key(q), 0) + 1
+            for i in sorted(redo):
+                others = [{"league": q["league"], "playerId": q.get("playerId"), "stat": q["stat"],
+                           "tier": PLAN[j]}
+                          for j, q in enumerate(s["questions"]) if j not in redo or j < i]
+                c = pick_question(tier_pools[PLAN[i]], others, used, sport == "mix", uses)
+                if not c:
+                    short += 1
+                    uses[player_key(s["questions"][i])] = uses.get(player_key(s["questions"][i]), 0) + 1
+                    continue
+                used[cand_key(c)] = s["id"]
+                uses[player_key(c)] = uses.get(player_key(c), 0) + 1
+                s["questions"][i] = gen_question(c)
+            if redo:
+                s["reworked"] = today()
+                changed.append(s["id"])
+        save_bank(args.bank, bank)
+        if short:
+            print("  %d %s questions kept as they were: no fresh candidate fit" % (short, sport))
+        kept = verify_generated(args.bank, sport, changed, tier_pools, used, uses, rounds=8,
+                                originals={k: v for k, v in originals.items() if k in changed})
+        print("Reworked %d of %d unscheduled %s sets." % (kept, len(targets), sport))
 
 
 def cmd_find(args):
@@ -1299,6 +1480,18 @@ def main(argv=None):
     g.add_argument("--seed", type=int, help="fix the shuffle (default: different every run)")
     g.add_argument("--no-check", action="store_true", help="skip the automatic fetch + verify")
     g.set_defaults(func=cmd_generate)
+
+    rw = sub.add_parser("rework", help="re-pick questions in unscheduled generated sets under the current rules")
+    rw.add_argument("--league", default="all", help="nfl, nba, nhl, mlb, mix (comma-separated), or all")
+    rw.add_argument("--hard", action="store_true", help="replace the two hard questions (Q4, Q5)")
+    rw.add_argument("--variety", action="store_true",
+                    help="replace questions whose player is over the cap (%d per sport)" % PLAYER_CAP)
+    rw.add_argument("--again", action="store_true",
+                    help="redo hard questions in sets already reworked (otherwise only ones breaking the rules)")
+    rw.add_argument("--since", type=int, help="earliest season (start year) to use")
+    rw.add_argument("--to", type=int, help="latest season (default: last completed season)")
+    rw.add_argument("--seed", type=int, help="fix the shuffle (default: different every run)")
+    rw.set_defaults(func=cmd_rework)
 
     fd = sub.add_parser("find", help="look up player IDs by name")
     fd.add_argument("name")
