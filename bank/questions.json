@@ -6373,7 +6373,9 @@
             "fact": "Led the NFL in 2001."
           }
         ],
-        "reworked": "2026-10-30"
+        "reworked": "2026-10-30",
+        "date": "2026-11-20",
+        "scheduledBy": "random"
       },
       {
         "id": "nfl-0057",
@@ -12165,7 +12167,9 @@
             "fact": null,
             "kind": "recent"
           }
-        ]
+        ],
+        "date": "2026-11-20",
+        "scheduledBy": "random"
       },
       {
         "id": "nba-0036",
@@ -17236,7 +17240,9 @@
             "kind": "injury"
           }
         ],
-        "reworked": "2026-10-30"
+        "reworked": "2026-10-30",
+        "date": "2026-11-20",
+        "scheduledBy": "random"
       },
       {
         "id": "nhl-0029",
@@ -24225,7 +24231,9 @@
             "kind": "injury"
           }
         ],
-        "reworked": "2026-10-30"
+        "reworked": "2026-10-30",
+        "date": "2026-11-20",
+        "scheduledBy": "random"
       },
       {
         "id": "mlb-0035",
@@ -29275,7 +29283,9 @@
             "fact": null,
             "kind": "old"
           }
-        ]
+        ],
+        "date": "2026-11-20",
+        "scheduledBy": "random"
       },
       {
         "id": "mix-0026",
