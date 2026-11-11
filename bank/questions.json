@@ -4567,7 +4567,9 @@
             "kind": "recent"
           }
         ],
-        "reworked": "2026-10-30"
+        "reworked": "2026-10-30",
+        "date": "2026-11-24",
+        "scheduledBy": "random"
       },
       {
         "id": "nfl-0040",
@@ -11189,7 +11191,9 @@
             "fact": "Played only 32 of 82 games.",
             "kind": "injury"
           }
-        ]
+        ],
+        "date": "2026-11-24",
+        "scheduledBy": "random"
       },
       {
         "id": "nba-0028",
@@ -16650,7 +16654,9 @@
             "kind": "recent"
           }
         ],
-        "reworked": "2026-10-30"
+        "reworked": "2026-10-30",
+        "date": "2026-11-24",
+        "scheduledBy": "random"
       },
       {
         "id": "nhl-0023",
@@ -25345,7 +25351,9 @@
             "kind": "old"
           }
         ],
-        "reworked": "2026-10-30"
+        "reworked": "2026-10-30",
+        "date": "2026-11-24",
+        "scheduledBy": "random"
       },
       {
         "id": "mlb-0044",
@@ -29921,7 +29929,9 @@
             "fact": null,
             "kind": "recent"
           }
-        ]
+        ],
+        "date": "2026-11-24",
+        "scheduledBy": "random"
       },
       {
         "id": "mix-0031",
