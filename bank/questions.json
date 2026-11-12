@@ -7833,7 +7833,9 @@
             "kind": "old"
           }
         ],
-        "reworked": "2026-10-30"
+        "reworked": "2026-10-30",
+        "date": "2026-11-25",
+        "scheduledBy": "random"
       },
       {
         "id": "nfl-0074",
@@ -10575,7 +10577,9 @@
             "fact": null,
             "kind": "recent"
           }
-        ]
+        ],
+        "date": "2026-11-25",
+        "scheduledBy": "random"
       },
       {
         "id": "nba-0023",
@@ -17873,7 +17877,9 @@
             "kind": "injury"
           }
         ],
-        "reworked": "2026-10-30"
+        "reworked": "2026-10-30",
+        "date": "2026-11-25",
+        "scheduledBy": "random"
       },
       {
         "id": "nhl-0034",
@@ -23413,7 +23419,9 @@
             "kind": "old"
           }
         ],
-        "reworked": "2026-10-30"
+        "reworked": "2026-10-30",
+        "date": "2026-11-25",
+        "scheduledBy": "random"
       },
       {
         "id": "mlb-0028",
@@ -31659,7 +31667,9 @@
             "fact": null,
             "kind": "old"
           }
-        ]
+        ],
+        "date": "2026-11-25",
+        "scheduledBy": "random"
       },
       {
         "id": "mix-0045",
