@@ -6018,7 +6018,9 @@
             "kind": "recent"
           }
         ],
-        "reworked": "2026-10-30"
+        "reworked": "2026-10-30",
+        "date": "2026-11-30",
+        "scheduledBy": "random"
       },
       {
         "id": "nfl-0052",
@@ -12815,7 +12817,9 @@
             "fact": "Led the NBA in 2006-07.",
             "kind": "old"
           }
-        ]
+        ],
+        "date": "2026-11-30",
+        "scheduledBy": "random"
       },
       {
         "id": "nba-0041",
@@ -19357,7 +19361,9 @@
             "kind": "recent"
           }
         ],
-        "reworked": "2026-10-30"
+        "reworked": "2026-10-30",
+        "date": "2026-11-30",
+        "scheduledBy": "random"
       },
       {
         "id": "nhl-0046",
@@ -25145,7 +25151,9 @@
             "kind": "injury"
           }
         ],
-        "reworked": "2026-10-30"
+        "reworked": "2026-10-30",
+        "date": "2026-11-30",
+        "scheduledBy": "random"
       },
       {
         "id": "mlb-0042",
@@ -30221,7 +30229,9 @@
             "fact": null,
             "kind": "recent"
           }
-        ]
+        ],
+        "date": "2026-11-30",
+        "scheduledBy": "random"
       },
       {
         "id": "mix-0033",
