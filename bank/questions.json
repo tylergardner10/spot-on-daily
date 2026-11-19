@@ -5294,7 +5294,9 @@
             "kind": "recent"
           }
         ],
-        "reworked": "2026-10-30"
+        "reworked": "2026-10-30",
+        "date": "2026-12-02",
+        "scheduledBy": "random"
       },
       {
         "id": "nfl-0046",
@@ -11085,7 +11087,9 @@
             "fact": null,
             "kind": "old"
           }
-        ]
+        ],
+        "date": "2026-12-02",
+        "scheduledBy": "random"
       },
       {
         "id": "nba-0027",
@@ -19611,7 +19615,9 @@
             "kind": "recent"
           }
         ],
-        "reworked": "2026-10-30"
+        "reworked": "2026-10-30",
+        "date": "2026-12-02",
+        "scheduledBy": "random"
       },
       {
         "id": "nhl-0048",
@@ -24185,7 +24191,9 @@
             "kind": "old"
           }
         ],
-        "reworked": "2026-10-30"
+        "reworked": "2026-10-30",
+        "date": "2026-12-02",
+        "scheduledBy": "random"
       },
       {
         "id": "mlb-0034",
@@ -29499,7 +29507,9 @@
             "fact": "Led the NHL in 1996-97.",
             "kind": "old"
           }
-        ]
+        ],
+        "date": "2026-12-02",
+        "scheduledBy": "random"
       },
       {
         "id": "mix-0027",
