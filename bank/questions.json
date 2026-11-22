@@ -2286,7 +2286,9 @@
             "kind": "injury"
           }
         ],
-        "reworked": "2026-10-30"
+        "reworked": "2026-10-30",
+        "date": "2026-12-05",
+        "scheduledBy": "random"
       },
       {
         "id": "nfl-0021",
