@@ -7491,7 +7491,9 @@
             "kind": "recent"
           }
         ],
-        "reworked": "2026-10-30"
+        "reworked": "2026-10-30",
+        "date": "2026-12-06",
+        "scheduledBy": "random"
       },
       {
         "id": "nfl-0069",
