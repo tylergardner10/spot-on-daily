@@ -3137,7 +3137,9 @@
             "kind": "old"
           }
         ],
-        "reworked": "2026-10-30"
+        "reworked": "2026-10-30",
+        "date": "2026-12-11",
+        "scheduledBy": "random"
       },
       {
         "id": "nfl-0028",
